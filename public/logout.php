@@ -1,6 +1,6 @@
 <?php
-require_once '../core/Controller.php';
-require_once '../controllers/AuthController.php';
+require_once '../core/Autoloader.php';
+Core\Autoloader::register();
 
 $controller = new Controllers\AuthController();
 $controller->logout();

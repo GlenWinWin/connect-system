@@ -1,20 +1,20 @@
 <?php
 namespace Models;
 
-use Core\Database;
-
 class User {
-    private $db;
+    private $pdo;
 
     public function __construct() {
-        $this->db = new Database();
-        $this->pdo = $this->db->getConnection();
+        // Manually require the Database class
+        require_once __DIR__ . '/../core/Database.php';
+        $database = new \Core\Database();
+        $this->pdo = $database->getConnection();
     }
 
     public function findByEmail($email) {
         $stmt = $this->pdo->prepare("SELECT * FROM users WHERE email = ?");
         $stmt->execute([$email]);
-        return $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $stmt->fetch();
     }
 
     public function create($data) {

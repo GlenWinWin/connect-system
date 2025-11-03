@@ -2,6 +2,6 @@
 require_once '../core/Autoloader.php';
 Core\Autoloader::register();
 
-$controller = new Controllers\DashboardController();
-$controller->index();
+$controller = new Controllers\AuthController();
+$controller->login();
 ?>

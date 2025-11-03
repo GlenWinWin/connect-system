@@ -5,28 +5,27 @@ use PDO;
 use PDOException;
 
 class Database {
-    private $host = 'localhost';
-    private $username = 'root';
-    private $password = '';
-    private $database = 'church_management';
     private $pdo;
 
     public function __construct() {
-        $this->connect();
-        $this->createTables();
-    }
-
-    private function connect() {
+        $host = 'localhost';
+        $dbname = 'church_management';
+        $username = 'root';
+        $password = '';
+        
         try {
-            $this->pdo = new PDO(
-                "mysql:host={$this->host};dbname={$this->database}", 
-                $this->username, 
-                $this->password
-            );
+            $this->pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
             $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+            
+            $this->createTables();
         } catch (PDOException $e) {
             die("Connection failed: " . $e->getMessage());
         }
+    }
+
+    public function getConnection() {
+        return $this->pdo;
     }
 
     private function createTables() {
@@ -65,10 +64,6 @@ class Database {
             $this->pdo->prepare("INSERT INTO users (fullname, email, password, role) VALUES (?, ?, ?, ?)")
                 ->execute(['Administrator', 'admin@church.com', $hashedPassword, 'admin']);
         }
-    }
-
-    public function getConnection() {
-        return $this->pdo;
     }
 }
 ?>

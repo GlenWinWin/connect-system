@@ -1,14 +1,14 @@
 <?php
 namespace Models;
 
-use Core\Database;
-
 class Visitor {
-    private $db;
+    private $pdo;
 
     public function __construct() {
-        $this->db = new Database();
-        $this->pdo = $this->db->getConnection();
+        // Manually require the Database class
+        require_once __DIR__ . '/../core/Database.php';
+        $database = new \Core\Database();
+        $this->pdo = $database->getConnection();
     }
 
     public function create($data) {
@@ -33,12 +33,12 @@ class Visitor {
 
     public function getAll() {
         $stmt = $this->pdo->query("SELECT * FROM visitors ORDER BY created_at DESC");
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        return $stmt->fetchAll();
     }
 
     public function getFirstTimers() {
         $stmt = $this->pdo->query("SELECT * FROM visitors WHERE iam = 'First Timer' ORDER BY created_at DESC");
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        return $stmt->fetchAll();
     }
 
     public function getStatistics() {

@@ -2,7 +2,6 @@
 namespace Controllers;
 
 use Core\Controller;
-use Models\Visitor;
 
 class DashboardController extends Controller {
     private $visitorModel;
@@ -11,7 +10,10 @@ class DashboardController extends Controller {
         parent::__construct();
         session_start();
         $this->requireAuth();
-        $this->visitorModel = new Visitor();
+        
+        // Manually require the Visitor model
+        require_once __DIR__ . '/../models/Visitor.php';
+        $this->visitorModel = new \Models\Visitor();
     }
 
     public function index() {
@@ -29,7 +31,7 @@ class DashboardController extends Controller {
             ]
         ];
 
-        $this->view('dashboard/index', $data);
+        $this->render('dashboard/index', $data);
     }
 }
 ?>

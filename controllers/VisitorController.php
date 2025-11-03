@@ -2,14 +2,16 @@
 namespace Controllers;
 
 use Core\Controller;
-use Models\Visitor;
 
 class VisitorController extends Controller {
     private $visitorModel;
 
     public function __construct() {
         parent::__construct();
-        $this->visitorModel = new Visitor();
+        
+        // Manually require the Visitor model
+        require_once __DIR__ . '/../models/Visitor.php';
+        $this->visitorModel = new \Models\Visitor();
     }
 
     public function form() {
@@ -28,13 +30,16 @@ class VisitorController extends Controller {
             ];
 
             if ($this->visitorModel->create($data)) {
-                $this->view('visitors/form', ['success' => 'Thank you for submitting your information! We will contact you soon.']);
+                $success = 'Thank you for submitting your information! We will contact you soon.';
             } else {
-                $this->view('visitors/form', ['error' => 'There was an error submitting your form. Please try again.']);
+                $error = 'There was an error submitting your form. Please try again.';
             }
-        } else {
-            $this->view('visitors/form');
         }
+        
+        $this->render('visitors/form', [
+            'success' => $success ?? null,
+            'error' => $error ?? null
+        ]);
     }
 }
 ?>

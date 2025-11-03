@@ -2,7 +2,6 @@
 namespace Controllers;
 
 use Core\Controller;
-use Models\User;
 
 class AuthController extends Controller {
     private $userModel;
@@ -10,7 +9,10 @@ class AuthController extends Controller {
     public function __construct() {
         parent::__construct();
         session_start();
-        $this->userModel = new User();
+        
+        // Manually require the User model
+        require_once __DIR__ . '/../models/User.php';
+        $this->userModel = new \Models\User();
     }
 
     public function login() {
@@ -27,12 +29,13 @@ class AuthController extends Controller {
                 $_SESSION['role'] = $user['role'];
                 
                 $this->redirect('/dashboard.php');
+                return;
             } else {
-                $this->view('auth/login', ['error' => 'Invalid email or password!']);
+                $error = 'Invalid email or password!';
             }
-        } else {
-            $this->view('auth/login');
         }
+        
+        $this->render('auth/login', ['error' => $error ?? null]);
     }
 
     public function signup() {
@@ -46,23 +49,19 @@ class AuthController extends Controller {
             ];
 
             if ($data['password'] !== $data['confirm_password']) {
-                $this->view('auth/signup', ['error' => 'Passwords do not match!']);
+                $error = 'Passwords do not match!';
+            } elseif ($this->userModel->emailExists($data['email'])) {
+                $error = 'Email already exists!';
+            } elseif ($this->userModel->create($data)) {
+                $success = 'Account created successfully! You can now login.';
+                $this->render('auth/login', ['success' => $success]);
                 return;
-            }
-
-            if ($this->userModel->emailExists($data['email'])) {
-                $this->view('auth/signup', ['error' => 'Email already exists!']);
-                return;
-            }
-
-            if ($this->userModel->create($data)) {
-                $this->view('auth/login', ['success' => 'Account created successfully! You can now login.']);
             } else {
-                $this->view('auth/signup', ['error' => 'Error creating account. Please try again.']);
+                $error = 'Error creating account. Please try again.';
             }
-        } else {
-            $this->view('auth/signup');
         }
+        
+        $this->render('auth/signup', ['error' => $error ?? null]);
     }
 
     public function logout() {

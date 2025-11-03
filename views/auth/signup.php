@@ -1,7 +1,14 @@
-<?php require_once 'layouts/header.php'; ?>
+<?php require_once __DIR__ . '/../layouts/header.php'; ?>
 
 <div class="container">
-    <!-- Similar structure to login.php but for signup -->
+    <div class="header">
+        <div class="logo">
+            <i class="fas fa-church"></i>
+        </div>
+        <h1 class="church-name">River of God Church</h1>
+        <p class="tagline">Connecting hearts, transforming lives, serving our community</p>
+    </div>
+
     <div class="auth-container">
         <div class="welcome-section">
             <div class="welcome-content">
@@ -77,7 +84,18 @@
 </div>
 
 <script>
-    // Add similar JavaScript for password toggles
+    document.addEventListener('DOMContentLoaded', function() {
+        const togglePasswords = document.querySelectorAll('.toggle-password');
+        
+        togglePasswords.forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                const input = this.parentElement.querySelector('input');
+                const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+                input.setAttribute('type', type);
+                this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+            });
+        });
+    });
 </script>
 
-<?php require_once 'layouts/footer.php'; ?>
+<?php require_once __DIR__ . '/../layouts/footer.php'; ?>

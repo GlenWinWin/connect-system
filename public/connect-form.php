@@ -1,6 +1,6 @@
 <?php
-require_once '../core/Controller.php';
-require_once '../controllers/VisitorController.php';
+require_once '../core/Autoloader.php';
+Core\Autoloader::register();
 
 $controller = new Controllers\VisitorController();
 $controller->form();
