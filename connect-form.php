@@ -1,6 +1,70 @@
+<?php
+require_once 'config/database.php';
+require_once 'includes/auth.php';
+allowPublicAccess(); // No login required
+
+$success_message = '';
+$error_message = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    try {
+        // Map form fields to database columns
+        $iam = $_POST['iam'] ?? '';
+        $fullname = $_POST['fullname'] ?? '';
+        $contact = $_POST['contact'] ?? '';
+        $age_group = $_POST['age'] ?? '';
+        $messenger = $_POST['messenger'] ?? '';
+        $service_attended = $_POST['service'] ?? '';
+        $invited_by = $_POST['invited-by'] ?? null;
+        $lifegroup = $_POST['lifegroup'] ?? '';
+        $connected_with = $_POST['connected-with'] ?? '';
+        $approached_by = $_POST['approached-by'] ?? '';
+        
+        // Follow-up fields (set to default values for public form)
+        $texted_already = 0;
+        $update_report = '';
+        $followed_up_by = '';
+        $started_one2one = 0;
+
+        // Validate required fields
+        $required_fields = [
+            'iam', 'fullname', 'contact', 'age', 'messenger', 
+            'service', 'lifegroup', 'connected-with', 'approached-by'
+        ];
+        
+        foreach ($required_fields as $field) {
+            if (empty($_POST[$field])) {
+                throw new Exception("Please fill in all required fields.");
+            }
+        }
+
+        // Insert into database
+        $sql = "INSERT INTO first_timers (
+            iam, fullname, contact, age_group, messenger, service_attended, 
+            invited_by, lifegroup, connected_with, approached_by,
+            texted_already, update_report, followed_up_by, started_one2one
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            $iam, $fullname, $contact, $age_group, $messenger, $service_attended,
+            $invited_by, $lifegroup, $connected_with, $approached_by,
+            $texted_already, $update_report, $followed_up_by, $started_one2one
+        ]);
+        
+        $success_message = "Thank you for submitting your information! We will contact you soon.";
+        
+        // Clear form
+        $_POST = array();
+        
+    } catch (Exception $e) {
+        $error_message = $e->getMessage();
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -274,6 +338,25 @@
             color: var(--dark);
         }
 
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
         /* Desktop-specific styles */
         @media (min-width: 768px) {
             .container {
@@ -421,23 +504,32 @@
                         <div class="required-note"><span class="required"></span> indicates required question</div>
                     </div>
 
-                    <form id="visitor-form">
+                    <?php if ($success_message): ?>
+                        <div class="alert alert-success"><?php echo htmlspecialchars($success_message); ?></div>
+                    <?php endif; ?>
+
+                    <?php if ($error_message): ?>
+                        <div class="alert alert-error"><?php echo htmlspecialchars($error_message); ?></div>
+                    <?php endif; ?>
+
+                    <form id="visitor-form" method="POST">
                         <div class="form-grid">
                             <div class="form-group full-width">
                                 <label class="required">I AM...</label>
                                 <div class="radio-group">
                                     <div class="radio-option">
-                                        <input type="radio" id="looking" name="iam" value="LOOKING FOR A CHURCH"
-                                            required>
+                                        <input type="radio" id="looking" name="iam" value="LOOKING FOR A CHURCH" 
+                                            <?php echo (isset($_POST['iam']) && $_POST['iam'] === 'LOOKING FOR A CHURCH') ? 'checked' : ''; ?> required>
                                         <label for="looking">LOOKING FOR A CHURCH</label>
                                     </div>
                                     <div class="radio-option">
-                                        <input type="radio" id="visitor" name="iam" value="VISITOR" required>
+                                        <input type="radio" id="visitor" name="iam" value="VISITOR"
+                                            <?php echo (isset($_POST['iam']) && $_POST['iam'] === 'VISITOR') ? 'checked' : ''; ?> required>
                                         <label for="visitor">VISITOR</label>
                                     </div>
                                     <div class="radio-option">
                                         <input type="radio" id="other-church" name="iam" value="FROM OTHER CHURCH"
-                                            required>
+                                            <?php echo (isset($_POST['iam']) && $_POST['iam'] === 'FROM OTHER CHURCH') ? 'checked' : ''; ?> required>
                                         <label for="other-church">FROM OTHER CHURCH</label>
                                     </div>
                                 </div>
@@ -446,41 +538,41 @@
                             <div class="form-group">
                                 <label for="fullname" class="required">FULL NAME</label>
                                 <input type="text" id="fullname" name="fullname" placeholder="Enter your full name"
-                                    required>
+                                    value="<?php echo htmlspecialchars($_POST['fullname'] ?? ''); ?>" required>
                             </div>
 
                             <div class="form-group">
                                 <label for="contact" class="required">CONTACT NO</label>
                                 <input type="tel" id="contact" name="contact" placeholder="Enter your phone number"
-                                    required>
+                                    value="<?php echo htmlspecialchars($_POST['contact'] ?? ''); ?>" required>
                             </div>
 
                             <div class="form-group full-width">
                                 <label class="required">AGE GROUP</label>
                                 <div class="radio-group">
                                     <div class="radio-option">
-                                        <input type="radio" id="youth" name="age"
-                                            value="River Youth (13 to 19 years old)" required>
+                                        <input type="radio" id="youth" name="age" value="River Youth (13 to 19 years old)"
+                                            <?php echo (isset($_POST['age']) && $_POST['age'] === 'River Youth (13 to 19 years old)') ? 'checked' : ''; ?> required>
                                         <label for="youth">River Youth (13 to 19 years old)</label>
                                     </div>
                                     <div class="radio-option">
-                                        <input type="radio" id="young-adult" name="age"
-                                            value="Young Adult (20 to 35 years old)" required>
+                                        <input type="radio" id="young-adult" name="age" value="Young Adult (20 to 35 years old)"
+                                            <?php echo (isset($_POST['age']) && $_POST['age'] === 'Young Adult (20 to 35 years old)') ? 'checked' : ''; ?> required>
                                         <label for="young-adult">Young Adult (20 to 35 years old)</label>
                                     </div>
                                     <div class="radio-option">
                                         <input type="radio" id="men" name="age" value="River Men (36 to 50 years old)"
-                                            required>
+                                            <?php echo (isset($_POST['age']) && $_POST['age'] === 'River Men (36 to 50 years old)') ? 'checked' : ''; ?> required>
                                         <label for="men">River Men (36 to 50 years old)</label>
                                     </div>
                                     <div class="radio-option">
-                                        <input type="radio" id="women" name="age"
-                                            value="River Women (36 to 50 years old)" required>
+                                        <input type="radio" id="women" name="age" value="River Women (36 to 50 years old)"
+                                            <?php echo (isset($_POST['age']) && $_POST['age'] === 'River Women (36 to 50 years old)') ? 'checked' : ''; ?> required>
                                         <label for="women">River Women (36 to 50 years old)</label>
                                     </div>
                                     <div class="radio-option">
-                                        <input type="radio" id="seasoned" name="age"
-                                            value="Seasoned (51 years old and above)" required>
+                                        <input type="radio" id="seasoned" name="age" value="Seasoned (51 years old and above)"
+                                            <?php echo (isset($_POST['age']) && $_POST['age'] === 'Seasoned (51 years old and above)') ? 'checked' : ''; ?> required>
                                         <label for="seasoned">Seasoned (51 years old and above)</label>
                                     </div>
                                 </div>
@@ -489,22 +581,25 @@
                             <div class="form-group">
                                 <label for="messenger" class="required">MESSENGER</label>
                                 <input type="text" id="messenger" name="messenger" placeholder="Enter your messenger ID"
-                                    required>
+                                    value="<?php echo htmlspecialchars($_POST['messenger'] ?? ''); ?>" required>
                             </div>
 
                             <div class="form-group">
                                 <label class="required">WHICH SERVICE DID YOU ATTEND?</label>
                                 <div class="radio-group">
                                     <div class="radio-option">
-                                        <input type="radio" id="service-10am" name="service" value="10AM" required>
+                                        <input type="radio" id="service-10am" name="service" value="10AM"
+                                            <?php echo (isset($_POST['service']) && $_POST['service'] === '10AM') ? 'checked' : ''; ?> required>
                                         <label for="service-10am">10AM</label>
                                     </div>
                                     <div class="radio-option">
-                                        <input type="radio" id="service-1pm" name="service" value="1PM" required>
+                                        <input type="radio" id="service-1pm" name="service" value="1PM"
+                                            <?php echo (isset($_POST['service']) && $_POST['service'] === '1PM') ? 'checked' : ''; ?> required>
                                         <label for="service-1pm">1PM</label>
                                     </div>
                                     <div class="radio-option">
-                                        <input type="radio" id="service-4pm" name="service" value="4PM" required>
+                                        <input type="radio" id="service-4pm" name="service" value="4PM"
+                                            <?php echo (isset($_POST['service']) && $_POST['service'] === '4PM') ? 'checked' : ''; ?> required>
                                         <label for="service-4pm">4PM</label>
                                     </div>
                                 </div>
@@ -512,18 +607,21 @@
 
                             <div class="form-group full-width">
                                 <label for="invited-by">IF YOU ARE INVITED BY SOMEONE, PLEASE TYPE THEIR NAME</label>
-                                <input type="text" id="invited-by" name="invited-by" placeholder="Optional">
+                                <input type="text" id="invited-by" name="invited-by" placeholder="Optional"
+                                    value="<?php echo htmlspecialchars($_POST['invited-by'] ?? ''); ?>">
                             </div>
 
                             <div class="form-group">
                                 <label class="required">DO YOU WANT TO JOIN A LIFEGROUP?</label>
                                 <div class="radio-group">
                                     <div class="radio-option">
-                                        <input type="radio" id="lifegroup-yes" name="lifegroup" value="YES" required>
+                                        <input type="radio" id="lifegroup-yes" name="lifegroup" value="YES"
+                                            <?php echo (isset($_POST['lifegroup']) && $_POST['lifegroup'] === 'YES') ? 'checked' : ''; ?> required>
                                         <label for="lifegroup-yes">YES</label>
                                     </div>
                                     <div class="radio-option">
-                                        <input type="radio" id="lifegroup-no" name="lifegroup" value="NO" required>
+                                        <input type="radio" id="lifegroup-no" name="lifegroup" value="NO"
+                                            <?php echo (isset($_POST['lifegroup']) && $_POST['lifegroup'] === 'NO') ? 'checked' : ''; ?> required>
                                         <label for="lifegroup-no">NO</label>
                                     </div>
                                 </div>
@@ -531,14 +629,14 @@
 
                             <div class="form-group">
                                 <label for="connected-with" class="required">CONNECTED WITH</label>
-                                <input type="text" id="connected-with" name="connected-with"
-                                    placeholder="How did you connect with us?" required>
+                                <input type="text" id="connected-with" name="connected-with" placeholder="How did you connect with us?"
+                                    value="<?php echo htmlspecialchars($_POST['connected-with'] ?? ''); ?>" required>
                             </div>
 
                             <div class="form-group">
                                 <label for="approached-by" class="required">APPROACHED BY (Connect Member)</label>
-                                <input type="text" id="approached-by" name="approached-by"
-                                    placeholder="Name of the member who approached you" required>
+                                <input type="text" id="approached-by" name="approached-by" placeholder="Name of the member who approached you"
+                                    value="<?php echo htmlspecialchars($_POST['approached-by'] ?? ''); ?>" required>
                             </div>
                         </div>
 
@@ -553,11 +651,7 @@
             <div class="privacy-card">
                 <div class="card privacy-notice">
                     <h3>Data Privacy Notice</h3>
-                    <p>We are aware of our responsibility to protect your personal data under strict confidentiality. As
-                        provided by the Data Privacy Act, you may decide for the processing of your personal data,
-                        except in access your personal information, and/or have a corrected, erased, or blocked on
-                        reasonable grounds. For the details of your rights as a data subject, you can get in touch with
-                        our Discipleship Team.</p>
+                    <p>We are aware of our responsibility to protect your personal data under strict confidentiality. As provided by the Data Privacy Act, you may decide for the processing of your personal data, except in access your personal information, and/or have a corrected, erased, or blocked on reasonable grounds. For the details of your rights as a data subject, you can get in touch with our Discipleship Team.</p>
                 </div>
             </div>
         </div>
@@ -566,24 +660,5 @@
             <p>River of God Church © 2025. All rights reserved.</p>
         </footer>
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const form = document.getElementById('visitor-form');
-            form.addEventListener('submit', function (e) {
-                e.preventDefault();
-
-                const formData = new FormData(form);
-                const visitor = {};
-                for (let [key, value] of formData.entries()) {
-                    visitor[key] = value;
-                }
-
-                alert('Thank you for submitting your information! We will contact you soon.');
-                form.reset();
-            });
-        });
-    </script>
 </body>
-
 </html>
