@@ -4,8 +4,8 @@ require_once 'includes/auth.php';
 requireAuth();
 
 // Handle date range and search
-$start_date = $_GET['start_date'] ?? date('Y-m-d', strtotime('-30 days'));
-$end_date = $_GET['end_date'] ?? date('Y-m-d');
+$start_date = $_GET['start_date'] ?? date('Y-m-01'); // First day of current month
+$end_date = $_GET['end_date'] ?? date('Y-m-t'); // Last day of current month
 $search = $_GET['search'] ?? '';
 $age_group_filter = $_GET['age_group'] ?? '';
 
