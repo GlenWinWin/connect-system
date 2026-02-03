@@ -280,12 +280,6 @@ body {
     color: #721c24;
 }
 
-.badge-age-group {
-    background: #e3f2fd;
-    color: #1565c0;
-    font-weight: 700;
-}
-
 .follow-up-section {
     background: var(--primary-ultralight);
     padding: 15px;
