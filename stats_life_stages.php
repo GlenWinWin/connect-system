@@ -5,11 +5,11 @@ requireAuth();
 
 // Query for age group statistics
 $age_groups = [
-    'River Youth (13 to 19 years old)' => 0,
-    'Young Adult (20 to 35 years old)' => 0,
-    'River Men (36 to 50 years old)' => 0,
-    'River Women (36 to 50 years old)' => 0,
-    'Seasoned (51 years old and above)' => 0
+    'River Youth' => 0,
+    'Young Adult' => 0,
+    'River Men' => 0,
+    'River Women' => 0,
+    'Seasoned' => 0
 ];
 
 try {
@@ -55,7 +55,7 @@ try {
     <title>Life Stages Statistics - River of God Church</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="css/stats_life_stages.css">
+    <link rel="stylesheet" href="css/stats.css">
 </head>
 <body>
     <div class="container">
