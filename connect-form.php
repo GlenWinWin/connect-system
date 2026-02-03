@@ -12,7 +12,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $iam = $_POST['iam'] ?? '';
         $fullname = $_POST['fullname'] ?? '';
         $contact = $_POST['contact'] ?? '';
-        $age_group = $_POST['age'] ?? '';
+        $age = $_POST['age'] ?? ''; // Changed from age_group to age
+        $gender = $_POST['gender'] ?? ''; // Added gender field
         $messenger = $_POST['messenger'] ?? '';
         $service_attended = $_POST['service'] ?? '';
         $invited_by = $_POST['invited-by'] ?? null;
@@ -28,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Validate required fields
         $required_fields = [
-            'iam', 'fullname', 'contact', 'age', 'messenger', 
+            'iam', 'fullname', 'contact', 'age', 'gender', 'messenger', 
             'service', 'lifegroup', 'connected-with', 'approached-by'
         ];
         
@@ -38,16 +39,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        // Validate age is numeric
+        if (!is_numeric($age) || $age <= 0) {
+            throw new Exception("Please enter a valid age.");
+        }
+
+        // Determine age group based on age and gender
+        $age = (int)$age; // Convert to integer for comparison
+        $age_group = ''; // This will hold the computed age group
+        
+        if ($age <= 19) {
+            $age_group = 'River Youth';
+        } elseif ($age >= 20 && $age <= 35) {
+            $age_group = 'Young Adults';
+        } elseif ($age >= 36 && $age <= 50) {
+            // Determine based on gender
+            $gender_value = ($gender === 'male') ? 1 : 0;
+            if ($gender === 'male') {
+                $age_group = 'River Men';
+            } else {
+                $age_group = 'River Women';
+            }
+        } elseif ($age >= 51) {
+            $age_group = 'Seasoned';
+        } else {
+            // Fallback for any edge cases
+            $age_group = 'Other';
+        }
+
+        // Convert gender to database value (1 for male, 0 for female)
+        $gender_value = ($gender === 'male') ? 1 : 0;
+
         // Insert into database
         $sql = "INSERT INTO first_timers (
-            iam, fullname, contact, age_group, messenger, service_attended, 
+            iam, fullname, contact, gender, age_group, messenger, service_attended, 
             invited_by, lifegroup, connected_with, approached_by,
             texted_already, update_report, followed_up_by, started_one2one
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
-            $iam, $fullname, $contact, $age_group, $messenger, $service_attended,
+            $iam, $fullname, $contact, $gender_value, $age_group, $messenger, $service_attended,
             $invited_by, $lifegroup, $connected_with, $approached_by,
             $texted_already, $update_report, $followed_up_by, $started_one2one
         ]);
@@ -134,33 +166,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     value="<?php echo htmlspecialchars($_POST['contact'] ?? ''); ?>" required>
                             </div>
 
-                            <div class="form-group full-width">
-                                <label class="required">AGE GROUP</label>
+                            <!-- Age Field (changed from age group radio buttons) -->
+                            <div class="form-group">
+                                <label for="age" class="required">AGE</label>
+                                <input type="number" id="age" name="age" placeholder="Enter your age" 
+                                    min="1" max="120" step="1"
+                                    value="<?php echo htmlspecialchars($_POST['age'] ?? ''); ?>" required>
+                            </div>
+
+                            <!-- Gender Field (added) -->
+                            <div class="form-group">
+                                <label class="required">GENDER</label>
                                 <div class="radio-group">
                                     <div class="radio-option">
-                                        <input type="radio" id="youth" name="age" value="River Youth (13 to 19 years old)"
-                                            <?php echo (isset($_POST['age']) && $_POST['age'] === 'River Youth (13 to 19 years old)') ? 'checked' : ''; ?> required>
-                                        <label for="youth">River Youth (13 to 19 years old)</label>
+                                        <input type="radio" id="gender-male" name="gender" value="male"
+                                            <?php echo (isset($_POST['gender']) && $_POST['gender'] === 'male') ? 'checked' : ''; ?> required>
+                                        <label for="gender-male">Male</label>
                                     </div>
                                     <div class="radio-option">
-                                        <input type="radio" id="young-adult" name="age" value="Young Adult (20 to 35 years old)"
-                                            <?php echo (isset($_POST['age']) && $_POST['age'] === 'Young Adult (20 to 35 years old)') ? 'checked' : ''; ?> required>
-                                        <label for="young-adult">Young Adult (20 to 35 years old)</label>
-                                    </div>
-                                    <div class="radio-option">
-                                        <input type="radio" id="men" name="age" value="River Men (36 to 50 years old)"
-                                            <?php echo (isset($_POST['age']) && $_POST['age'] === 'River Men (36 to 50 years old)') ? 'checked' : ''; ?> required>
-                                        <label for="men">River Men (36 to 50 years old)</label>
-                                    </div>
-                                    <div class="radio-option">
-                                        <input type="radio" id="women" name="age" value="River Women (36 to 50 years old)"
-                                            <?php echo (isset($_POST['age']) && $_POST['age'] === 'River Women (36 to 50 years old)') ? 'checked' : ''; ?> required>
-                                        <label for="women">River Women (36 to 50 years old)</label>
-                                    </div>
-                                    <div class="radio-option">
-                                        <input type="radio" id="seasoned" name="age" value="Seasoned (51 years old and above)"
-                                            <?php echo (isset($_POST['age']) && $_POST['age'] === 'Seasoned (51 years old and above)') ? 'checked' : ''; ?> required>
-                                        <label for="seasoned">Seasoned (51 years old and above)</label>
+                                        <input type="radio" id="gender-female" name="gender" value="female"
+                                            <?php echo (isset($_POST['gender']) && $_POST['gender'] === 'female') ? 'checked' : ''; ?> required>
+                                        <label for="gender-female">Female</label>
                                     </div>
                                 </div>
                             </div>
@@ -199,6 +225,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
 
                             <div class="form-group">
+                                <label for="approached-by" class="required">APPROACHED BY (Connect Member)</label>
+                                <input type="text" id="approached-by" name="approached-by" placeholder="Name of the member who approached you"
+                                    value="<?php echo htmlspecialchars($_POST['approached-by'] ?? ''); ?>" required>
+                            </div>
+
+                            <div class="form-group">
                                 <label class="required">DO YOU WANT TO JOIN A LIFEGROUP?</label>
                                 <div class="radio-group">
                                     <div class="radio-option">
@@ -219,12 +251,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <input type="text" id="connected-with" name="connected-with" placeholder="How did you connect with us?"
                                     value="<?php echo htmlspecialchars($_POST['connected-with'] ?? ''); ?>" required>
                             </div>
-
-                            <div class="form-group">
-                                <label for="approached-by" class="required">APPROACHED BY (Connect Member)</label>
-                                <input type="text" id="approached-by" name="approached-by" placeholder="Name of the member who approached you"
-                                    value="<?php echo htmlspecialchars($_POST['approached-by'] ?? ''); ?>" required>
-                            </div>
                         </div>
 
                         <div class="actions">
@@ -244,7 +270,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <footer>
-            <p>River of God Church © 2025. All rights reserved.</p>
+            <p>River of God Church © 2026. All rights reserved.</p>
         </footer>
     </div>
 </body>
