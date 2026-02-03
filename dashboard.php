@@ -9,6 +9,16 @@ $end_date = $_GET['end_date'] ?? date('Y-m-t'); // Last day of current month
 $search = $_GET['search'] ?? '';
 $age_group_filter = $_GET['age_group'] ?? '';
 
+// Check for upload messages
+$upload_success = $_SESSION['upload_success'] ?? '';
+$upload_error = $_SESSION['upload_error'] ?? '';
+$upload_errors = $_SESSION['upload_errors'] ?? [];
+
+// Clear session messages
+unset($_SESSION['upload_success']);
+unset($_SESSION['upload_error']);
+unset($_SESSION['upload_errors']);
+
 $where_conditions = ["DATE(created_at) BETWEEN ? AND ?"];
 $params = [$start_date, $end_date];
 
@@ -47,6 +57,137 @@ $age_groups = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
     <title>Dashboard - River of God Church</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/dashboard.css">
+    <style>
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            overflow: auto;
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+            animation: modalFadeIn 0.3s;
+        }
+        
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #666;
+            transition: color 0.3s;
+        }
+        
+        .close:hover {
+            color: #000;
+        }
+        
+        .modal h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .file-upload {
+            margin: 20px 0;
+        }
+        
+        .file-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px dashed #3498db;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        
+        .file-input:hover {
+            border-color: #2980b9;
+        }
+        
+        .upload-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #3498db;
+        }
+        
+        .upload-info h4 {
+            margin-top: 0;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .upload-info ul {
+            margin: 10px 0 0 0;
+            padding-left: 20px;
+        }
+        
+        .upload-info li {
+            margin-bottom: 5px;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        /* Alert styles for modal */
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -79,11 +220,11 @@ $age_groups = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
                     <label for="age_group">Age Group</label>
                     <select id="age_group" name="age_group">
                         <option value="">All Age Groups</option>
-                        <option value="River Youth (13 to 19 years old)" <?php echo $age_group_filter === 'River Youth (13 to 19 years old)' ? 'selected' : ''; ?>>River Youth (13 to 19 years old)</option>
-                        <option value="Young Adult (20 to 35 years old)" <?php echo $age_group_filter === 'Young Adult (20 to 35 years old)' ? 'selected' : ''; ?>>Young Adult (20 to 35 years old)</option>
-                        <option value="River Men (36 to 50 years old)" <?php echo $age_group_filter === 'River Men (36 to 50 years old)' ? 'selected' : ''; ?>>River Men (36 to 50 years old)</option>
-                        <option value="River Women (36 to 50 years old)" <?php echo $age_group_filter === 'River Women (36 to 50 years old)' ? 'selected' : ''; ?>>River Women (36 to 50 years old)</option>
-                        <option value="Seasoned (51 years old and above)" <?php echo $age_group_filter === 'Seasoned (51 years old and above)' ? 'selected' : ''; ?>>Seasoned (51 years old and above)</option>
+                        <option value="Youth" <?php echo $age_group_filter === 'Youth' ? 'selected' : ''; ?>>Youth (19 years old and below)</option>
+                        <option value="Young Adult" <?php echo $age_group_filter === 'Young Adult' ? 'selected' : ''; ?>>Young Adult (20 to 35 years old)</option>
+                        <option value="River Men" <?php echo $age_group_filter === 'River Men' ? 'selected' : ''; ?>>River Men (36 to 50 years old)</option>
+                        <option value="River Women" <?php echo $age_group_filter === 'River Women' ? 'selected' : ''; ?>>River Women (36 to 50 years old)</option>
+                        <option value="Seasoned" <?php echo $age_group_filter === 'Seasoned' ? 'selected' : ''; ?>>Seasoned (51 years old and above)</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -168,9 +309,9 @@ $age_groups = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
             <a href="export.php" class="btn btn-success">
                 <i class="fas fa-file-export"></i> Export CSV
             </a>
-            <a href="connect-form.php" class="btn btn-secondary" target="_blank">
-                <i class="fas fa-plus"></i> Public Form
-            </a>
+            <button type="button" data-open-modal class="btn btn-secondary">
+                <i class="fas fa-file-upload"></i> Upload CSV
+            </button>
             <a href="stats_visitor_type.php" class="btn">
                 <i class="fas fa-users"></i> Visitor Type Stats
             </a>
@@ -386,12 +527,115 @@ $age_groups = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
         <?php endif; ?>
     </div>
 
+    <!-- CSV Upload Modal -->
+    <div id="csvUploadModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2><i class="fas fa-file-upload"></i> Upload CSV File</h2>
+            
+            <?php if (!empty($upload_success)): ?>
+                <div class="alert alert-success" style="margin-bottom: 20px;">
+                    <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($upload_success); ?>
+                </div>
+            <?php endif; ?>
+            
+            <?php if (!empty($upload_error)): ?>
+                <div class="alert alert-error" style="margin-bottom: 20px;">
+                    <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($upload_error); ?>
+                </div>
+            <?php endif; ?>
+            
+            <?php if (!empty($upload_errors)): ?>
+                <div class="alert alert-warning" style="margin-bottom: 20px;">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    <?php echo count($upload_errors); ?> errors found:
+                    <ul style="margin: 10px 0 0 20px; font-size: 0.9em;">
+                        <?php foreach ($upload_errors as $error): ?>
+                            <li><?php echo htmlspecialchars($error); ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            <?php endif; ?>
+            
+            <form id="csvUploadForm" method="POST" action="upload-csv.php" enctype="multipart/form-data">
+                <div class="file-upload">
+                    <input type="file" id="csv_file" name="csv_file" accept=".csv" class="file-input" required>
+                    <p style="margin-top: 10px; color: #666; font-size: 0.9em;">
+                        <i class="fas fa-info-circle"></i> Select a CSV file with visitor data
+                    </p>
+                </div>
+                
+                <div class="upload-info">
+                    <h4><i class="fas fa-table"></i> CSV Format Requirements:</h4>
+                    <ul style="font-size: 0.9em; color: #555;">
+                        <li>File must have headers: Timestamp, FULL NAME:, AGE GROUP:, etc.</li>
+                        <li>Supported age groups: Youth, Young Adult, River Men, River Women, Seasoned</li>
+                        <li>Maximum file size: 10MB</li>
+                    </ul>
+                </div>
+                
+                <div class="modal-actions" style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-success" style="flex: 1;">
+                        <i class="fas fa-upload"></i> Upload & Import
+                    </button>
+                    <button type="button" class="btn btn-secondary close-modal" style="flex: 1;">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         function filterAgeGroup(ageGroup) {
             const url = new URL(window.location.href);
             url.searchParams.set('age_group', ageGroup);
             window.location.href = url.toString();
         }
+        
+        // Modal functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('csvUploadModal');
+            const openModalBtn = document.querySelector('[data-open-modal]');
+            const closeModalBtns = document.querySelectorAll('.close, .close-modal');
+            const fileInput = document.getElementById('csv_file');
+            
+            // Open modal when "Upload CSV" button is clicked
+            if (openModalBtn) {
+                openModalBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    modal.style.display = 'block';
+                });
+            }
+            
+            // Close modal
+            closeModalBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    modal.style.display = 'none';
+                });
+            });
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+            
+            // Show file name when selected
+            if (fileInput) {
+                fileInput.addEventListener('change', function() {
+                    const fileName = this.files[0]?.name || 'No file selected';
+                    this.nextElementSibling.innerHTML = 
+                        `<i class="fas fa-file-csv"></i> Selected: ${fileName}`;
+                });
+            }
+            
+            // Show modal if there are upload messages
+            <?php if (!empty($upload_success) || !empty($upload_error) || !empty($upload_errors)): ?>
+                modal.style.display = 'block';
+            <?php endif; ?>
+        });
     </script>
 </body>
 </html>
