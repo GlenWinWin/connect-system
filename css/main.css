@@ -278,6 +278,7 @@ p {
 }
 
 .church-name {
+    color: white;
     font-family: var(--font-heading);
     font-size: 28px;
     font-weight: 700;

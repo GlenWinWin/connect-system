@@ -527,13 +527,9 @@ $age_groups = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <th>Name</th>
                                 <th>Contact</th>
                                 <th>Age Group</th>
-                                <th>Messenger</th>
                                 <th>Visitor Type</th>
                                 <th>Invited By</th>
                                 <th>Service</th>
-                                <th>Lifegroup</th>
-                                <th>Texted</th>
-                                <th>One-to-One</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -552,25 +548,9 @@ $age_groups = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <td>
                                         <?php echo htmlspecialchars($visitor['age_group'] ?: 'Not Specified'); ?>
                                     </td>
-                                    <td><?php echo htmlspecialchars($visitor['messenger']); ?></td>
                                     <td><?php echo htmlspecialchars($visitor['iam']); ?></td>
                                     <td><?php echo htmlspecialchars($visitor['invited_by'] ?: 'Walk In'); ?></td>
                                     <td><?php echo htmlspecialchars($visitor['service_attended']); ?></td>
-                                    <td>
-                                        <span class="badge <?php echo $visitor['lifegroup'] === 'YES' ? 'badge-yes' : 'badge-no'; ?>">
-                                            <?php echo $visitor['lifegroup']; ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="badge <?php echo $visitor['texted_already'] ? 'badge-yes' : 'badge-no'; ?>">
-                                            <?php echo $visitor['texted_already'] ? 'Yes' : 'No'; ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="badge <?php echo $visitor['started_one2one'] ? 'badge-yes' : 'badge-no'; ?>">
-                                            <?php echo $visitor['started_one2one'] ? 'Yes' : 'No'; ?>
-                                        </span>
-                                    </td>
                                     <td>
                                         <a href="edit_first_timer.php?id=<?php echo $visitor['id']; ?>" class="btn btn-sm">
                                             <i class="fas fa-edit"></i> Edit
@@ -594,93 +574,6 @@ $age_groups = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
                                         <div class="detail-label"><?php echo date('M j, Y', strtotime($visitor['created_at'])); ?></div>
                                         <div class="detail-value"><?php echo date('g:i A', strtotime($visitor['created_at'])); ?></div>
                                     </div>
-                                </div>
-
-                                <div class="visitor-details">
-                                    <div class="detail-group">
-                                        <span class="detail-label">Age Group</span>
-                                        <span class="detail-value">
-                                            <span class="badge badge-age-group"><?php echo htmlspecialchars($visitor['age_group'] ?: 'Not Specified'); ?></span>
-                                        </span>
-                                    </div>
-
-                                    <div class="detail-group">
-                                        <span class="detail-label">Messenger</span>
-                                        <span class="detail-value"><?php echo htmlspecialchars($visitor['messenger']); ?></span>
-                                    </div>
-
-                                    <div class="detail-group">
-                                        <span class="detail-label">Visitor Type</span>
-                                        <span class="detail-value"><?php echo htmlspecialchars($visitor['iam']); ?></span>
-                                    </div>
-
-                                    <div class="detail-group">
-                                        <span class="detail-label">Invited By</span>
-                                        <span class="detail-value"><?php echo htmlspecialchars($visitor['invited_by'] ?: 'Walk In'); ?></span>
-                                    </div>
-
-                                    <div class="detail-group">
-                                        <span class="detail-label">Service</span>
-                                        <span class="detail-value"><?php echo htmlspecialchars($visitor['service_attended']); ?></span>
-                                    </div>
-
-                                    <div class="detail-group">
-                                        <span class="detail-label">Approached By</span>
-                                        <span class="detail-value"><?php echo htmlspecialchars($visitor['approached_by']); ?></span>
-                                    </div>
-
-                                    <div class="detail-group">
-                                        <span class="detail-label">Connected With</span>
-                                        <span class="detail-value"><?php echo htmlspecialchars($visitor['connected_with']); ?></span>
-                                    </div>
-
-                                    <div class="detail-group">
-                                        <span class="detail-label">Lifegroup</span>
-                                        <span class="detail-value">
-                                            <span class="badge <?php echo $visitor['lifegroup'] === 'YES' ? 'badge-yes' : 'badge-no'; ?>">
-                                                <?php echo $visitor['lifegroup']; ?>
-                                            </span>
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <!-- Follow-up Section -->
-                                <div class="follow-up-section">
-                                    <div class="follow-up-title">
-                                        <i class="fas fa-chart-line"></i> Follow-up Status
-                                    </div>
-                                    <div class="follow-up-grid">
-                                        <div class="detail-group">
-                                            <span class="detail-label">Texted</span>
-                                            <span class="detail-value">
-                                                <span class="badge <?php echo $visitor['texted_already'] ? 'badge-yes' : 'badge-no'; ?>">
-                                                    <?php echo $visitor['texted_already'] ? 'Yes' : 'No'; ?>
-                                                </span>
-                                            </span>
-                                        </div>
-
-                                        <div class="detail-group">
-                                            <span class="detail-label">One-to-One</span>
-                                            <span class="detail-value">
-                                                <span class="badge <?php echo $visitor['started_one2one'] ? 'badge-yes' : 'badge-no'; ?>">
-                                                    <?php echo $visitor['started_one2one'] ? 'Yes' : 'No'; ?>
-                                                </span>
-                                            </span>
-                                        </div>
-
-                                        <?php if ($visitor['followed_up_by']): ?>
-                                        <div class="detail-group">
-                                            <span class="detail-label">Followed Up By</span>
-                                            <span class="detail-value"><?php echo htmlspecialchars($visitor['followed_up_by']); ?></span>
-                                        </div>
-                                        <?php endif; ?>
-                                    </div>
-                                    <?php if ($visitor['update_report']): ?>
-                                    <div class="detail-group" style="margin-top: 10px;">
-                                        <span class="detail-label">Update / Report</span>
-                                        <span class="detail-value"><?php echo htmlspecialchars($visitor['update_report']); ?></span>
-                                    </div>
-                                    <?php endif; ?>
                                 </div>
 
                                 <div class="action-buttons">
