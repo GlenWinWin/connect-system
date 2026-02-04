@@ -6,6 +6,18 @@ requireAuth();
 // Default date range (last 30 days)
 $start_date = $_GET['start_date'] ?? date('Y-m-d', strtotime('-30 days'));
 $end_date = $_GET['end_date'] ?? date('Y-m-d');
+$age_group_filter = $_GET['age_group'] ?? '';
+
+// Build WHERE conditions
+$where_conditions = ["DATE(created_at) BETWEEN ? AND ?"];
+$params = [$start_date, $end_date];
+
+if (!empty($age_group_filter)) {
+    $where_conditions[] = "age_group = ?";
+    $params[] = $age_group_filter;
+}
+
+$where_clause = "WHERE " . implode(" AND ", $where_conditions);
 
 // Fetch analytics data
 $sql = "SELECT 
@@ -17,12 +29,12 @@ $sql = "SELECT
             SUM(CASE WHEN texted_already = 1 THEN 1 ELSE 0 END) as texted,
             SUM(CASE WHEN started_one2one = 1 THEN 1 ELSE 0 END) as started_one2one
         FROM first_timers 
-        WHERE DATE(created_at) BETWEEN ? AND ?
+        $where_clause
         GROUP BY DATE(created_at)
         ORDER BY date";
 
 $stmt = $pdo->prepare($sql);
-$stmt->execute([$start_date, $end_date]);
+$stmt->execute($params);
 $daily_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Calculate totals
@@ -43,15 +55,15 @@ foreach ($daily_data as $day) {
 $total_visitors_all = $total_first_timers + $total_visitors;
 
 // Get service data
-$service_sql = "SELECT service_attended, COUNT(*) as count FROM first_timers WHERE DATE(created_at) BETWEEN ? AND ? GROUP BY service_attended";
+$service_sql = "SELECT service_attended, COUNT(*) as count FROM first_timers $where_clause GROUP BY service_attended";
 $service_stmt = $pdo->prepare($service_sql);
-$service_stmt->execute([$start_date, $end_date]);
+$service_stmt->execute($params);
 $service_data = $service_stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Get age group data
-$age_group_sql = "SELECT age_group, COUNT(*) as count FROM first_timers WHERE DATE(created_at) BETWEEN ? AND ? GROUP BY age_group";
+$age_group_sql = "SELECT age_group, COUNT(*) as count FROM first_timers $where_clause GROUP BY age_group";
 $age_group_stmt = $pdo->prepare($age_group_sql);
-$age_group_stmt->execute([$start_date, $end_date]);
+$age_group_stmt->execute($params);
 $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
@@ -288,6 +300,12 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
             border: none;
         }
 
+        .btn-success:hover {
+            background: linear-gradient(135deg, var(--success) 0%, #25a898 100%);
+            color: white;
+            border: none;
+        }
+
         /* Stats Grid */
         .stats-grid {
             display: grid;
@@ -508,19 +526,18 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
             font-weight: 600;
         }
 
-        /* Daily Breakdown */
-        .daily-breakdown {
+        /* Age Group Distribution */
+        .age-group-section {
             background: white;
             border-radius: var(--border-radius);
-            padding: 30px;
+            padding: 25px;
+            margin-bottom: 30px;
             box-shadow: var(--shadow);
-            margin-bottom: 40px;
             border: 1px solid rgba(255, 107, 53, 0.1);
             position: relative;
-            overflow: hidden;
         }
-
-        .daily-breakdown::before {
+        
+        .age-group-section::before {
             content: '';
             position: absolute;
             top: 0;
@@ -529,126 +546,72 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
             height: 5px;
             background: var(--orange-gradient);
         }
-
-        .breakdown-title {
+        
+        .age-group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        .age-group-title {
             font-family: 'Poppins', sans-serif;
             font-size: 22px;
             font-weight: 700;
             color: var(--dark);
-            margin-bottom: 25px;
             display: flex;
             align-items: center;
-            gap: 12px;
-            position: relative;
+            gap: 10px;
         }
-
-        .breakdown-title::after {
-            content: '';
-            position: absolute;
-            bottom: -8px;
-            left: 0;
-            width: 80px;
-            height: 3px;
-            background: var(--orange-gradient);
-            border-radius: 2px;
-        }
-
-        .breakdown-title i {
+        
+        .age-group-title i {
             color: var(--primary);
         }
-
-        .breakdown-container {
-            overflow-x: auto;
+        
+        .age-group-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .age-group-card {
+            background: white;
             border-radius: var(--border-radius-sm);
-            border: 1px solid var(--gray-light);
-            position: relative;
-        }
-
-        .breakdown-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            min-width: 800px;
-        }
-
-        .breakdown-table th {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            font-weight: 700;
-            padding: 20px 16px;
-            text-align: left;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-family: 'Poppins', sans-serif;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        .breakdown-table th:first-child {
-            border-top-left-radius: var(--border-radius-sm);
-        }
-
-        .breakdown-table th:last-child {
-            border-top-right-radius: var(--border-radius-sm);
-        }
-
-        .breakdown-table td {
-            padding: 18px 16px;
-            border-bottom: 1px solid var(--gray-light);
-            font-size: 14px;
-            font-weight: 500;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
             transition: var(--transition);
+            border: 2px solid transparent;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.1);
         }
-
-        .breakdown-table tr:hover td {
-            background: rgba(255, 107, 53, 0.04);
+        
+        .age-group-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.15);
+            border-color: var(--primary-light);
         }
-
-        .breakdown-table tr:nth-child(even) {
-            background: rgba(255, 107, 53, 0.02);
+        
+        .age-group-card.active {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.05) 0%, rgba(255, 159, 28, 0.05) 100%);
         }
-
-        .breakdown-table tr:nth-child(even):hover td {
-            background: rgba(255, 107, 53, 0.06);
+        
+        .age-group-name {
+            font-family: 'Poppins', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 10px;
         }
-
-        .percentage-bar {
-            width: 100%;
-            height: 8px;
-            background: var(--gray-light);
-            border-radius: 4px;
-            overflow: hidden;
-            margin: 6px 0;
-            position: relative;
+        
+        .age-group-count {
+            font-family: 'Poppins', sans-serif;
+            font-size: 32px;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 8px;
         }
-
-        .percentage-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--success), #25a898);
-            border-radius: 4px;
-            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .percentage-fill::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            animation: shimmer 2s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-
+        
         /* Empty State */
         .empty-state {
             text-align: center;
@@ -676,26 +639,6 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
             color: var(--gray);
             max-width: 400px;
             margin: 0 auto;
-        }
-
-        /* Badge Styles */
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 13px;
-            text-align: center;
-            min-width: 60px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            transition: var(--transition);
-        }
-
-        .badge:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
         }
 
         /* Responsive Design */
@@ -739,6 +682,10 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
             .filter-form {
                 grid-template-columns: 1fr;
             }
+            
+            .age-group-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         /* Animation */
@@ -762,7 +709,7 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
             }
         }
 
-        .stat-card, .chart-container, .daily-breakdown {
+        .stat-card, .chart-container, .age-group-section {
             animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
             opacity: 0;
         }
@@ -773,9 +720,7 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
         .stat-card:nth-child(4) { animation-delay: 0.4s; }
         .chart-container:nth-child(1) { animation-delay: 0.5s; }
         .chart-container:nth-child(2) { animation-delay: 0.6s; }
-        .chart-container:nth-child(3) { animation-delay: 0.7s; }
-        .chart-container:nth-child(4) { animation-delay: 0.8s; }
-        .daily-breakdown { animation-delay: 0.9s; }
+        .age-group-section { animation-delay: 0.7s; }
 
         /* Scrollbar Styling */
         ::-webkit-scrollbar {
@@ -855,6 +800,17 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
                 <div class="form-group">
                     <label for="end_date"><i class="far fa-calendar-alt"></i> End Date</label>
                     <input type="date" id="end_date" name="end_date" value="<?php echo htmlspecialchars($end_date); ?>" required>
+                </div>
+                <div class="form-group">
+                    <label for="age_group"><i class="fas fa-users"></i> Age Group</label>
+                    <select id="age_group" name="age_group">
+                        <option value="">All Age Groups</option>
+                        <option value="Youth" <?php echo $age_group_filter === 'Youth' ? 'selected' : ''; ?>>Youth (19 years old and below)</option>
+                        <option value="Young Adult" <?php echo $age_group_filter === 'Young Adult' ? 'selected' : ''; ?>>Young Adult (20 to 35 years old)</option>
+                        <option value="River Men" <?php echo $age_group_filter === 'River Men' ? 'selected' : ''; ?>>River Men (36 to 50 years old)</option>
+                        <option value="River Women" <?php echo $age_group_filter === 'River Women' ? 'selected' : ''; ?>>River Women (36 to 50 years old)</option>
+                        <option value="Seasoned" <?php echo $age_group_filter === 'Seasoned' ? 'selected' : ''; ?>>Seasoned (51 years old and above)</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <button type="submit" class="btn btn-success">
@@ -947,16 +903,6 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
                     </div>
                 </div>
 
-                <!-- Follow-up Progress Chart -->
-                <div class="chart-container">
-                    <h3 class="chart-title">
-                        <i class="fas fa-chart-bar"></i> Follow-up Progress
-                    </h3>
-                    <div class="chart-wrapper">
-                        <canvas id="followupChart"></canvas>
-                    </div>
-                </div>
-
                 <!-- Service Attendance Chart -->
                 <div class="chart-container">
                     <h3 class="chart-title">
@@ -980,72 +926,34 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
             </div>
 
-            <!-- Daily Breakdown -->
-            <div class="daily-breakdown">
-                <h3 class="breakdown-title">
-                    <i class="fas fa-table"></i> Daily Visitor Breakdown
-                </h3>
-                <div class="breakdown-container">
-                    <table class="breakdown-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>First Timers</th>
-                                <th>Visitors</th>
-                                <th>Total</th>
-                                <th>Lifegroup Interest</th>
-                                <th>Texted</th>
-                                <th>One-to-One</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($daily_data as $day): ?>
-                                <tr>
-                                    <td><strong><?php echo date('M j, Y', strtotime($day['date'])); ?></strong></td>
-                                    <td>
-                                        <span class="badge" style="background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(255, 107, 53, 0.2) 100%); color: var(--primary); border: 1px solid rgba(255, 107, 53, 0.3);">
-                                            <?php echo $day['first_timers']; ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="badge" style="background: linear-gradient(135deg, rgba(255, 159, 28, 0.1) 0%, rgba(255, 159, 28, 0.2) 100%); color: var(--secondary); border: 1px solid rgba(255, 159, 28, 0.3);">
-                                            <?php echo $day['visitors']; ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="badge" style="background: linear-gradient(135deg, rgba(46, 196, 182, 0.1) 0%, rgba(46, 196, 182, 0.2) 100%); color: var(--success); border: 1px solid rgba(46, 196, 182, 0.3);">
-                                            <?php echo $day['total']; ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div style="display: flex; align-items: center; gap: 15px;">
-                                            <span style="font-weight: 700; color: var(--dark);"><?php echo $day['lifegroup_interest']; ?></span>
-                                            <?php if ($day['total'] > 0): ?>
-                                                <div style="flex: 1; max-width: 120px;">
-                                                    <div class="percentage-bar">
-                                                        <div class="percentage-fill" style="width: <?php echo ($day['lifegroup_interest'] / $day['total']) * 100; ?>%"></div>
-                                                    </div>
-                                                    <small style="color: var(--gray); font-size: 12px; font-weight: 600;">
-                                                        <?php echo round(($day['lifegroup_interest'] / $day['total']) * 100, 1); ?>%
-                                                    </small>
-                                                </div>
-                                            <?php endif; ?>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span class="badge" style="background: linear-gradient(135deg, rgba(255, 191, 105, 0.1) 0%, rgba(255, 191, 105, 0.2) 100%); color: var(--warning); border: 1px solid rgba(255, 191, 105, 0.3);">
-                                            <?php echo $day['texted']; ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="badge" style="background: linear-gradient(135deg, rgba(255, 90, 95, 0.1) 0%, rgba(255, 90, 95, 0.2) 100%); color: var(--accent); border: 1px solid rgba(255, 90, 95, 0.3);">
-                                            <?php echo $day['started_one2one']; ?>
-                                        </span>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+            <!-- Age Group Distribution -->
+            <div class="age-group-section">
+                <div class="age-group-header">
+                    <h2 class="age-group-title"><i class="fas fa-chart-pie"></i> Age Group Distribution</h2>
+                    <span style="color: var(--gray); font-weight: 600;">Total Visitors: <?php echo $total_visitors_all; ?></span>
+                </div>
+                
+                <div class="age-group-grid">
+                    <?php foreach ($age_group_data as $age_group): ?>
+                        <div class="age-group-card <?php echo $age_group_filter === $age_group['age_group'] ? 'active' : ''; ?>" 
+                             onclick="filterAgeGroup('<?php echo $age_group['age_group']; ?>')">
+                            <div class="age-group-name"><?php echo htmlspecialchars($age_group['age_group']); ?></div>
+                            <div class="age-group-count" style="color: <?php echo getAgeGroupColor($age_group['age_group']); ?>;">
+                                <?php echo $age_group['count']; ?>
+                            </div>
+                            <div style="color: var(--gray); font-size: 14px; font-weight: 600;">
+                                <?php echo $total_visitors_all > 0 ? round(($age_group['count'] / $total_visitors_all) * 100, 1) : 0; ?>%
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                    
+                    <?php if (empty($age_group_data)): ?>
+                        <div class="age-group-card">
+                            <div class="age-group-name">No Age Data</div>
+                            <div class="age-group-count" style="color: var(--gray);">0</div>
+                            <div style="color: var(--gray); font-size: 14px; font-weight: 600;">0%</div>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         <?php endif; ?>
@@ -1060,17 +968,12 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
         const firstTimers = <?php echo json_encode(array_column($daily_data, 'first_timers')); ?>;
         const visitors = <?php echo json_encode(array_column($daily_data, 'visitors')); ?>;
         const totals = <?php echo json_encode(array_column($daily_data, 'total')); ?>;
-        const lifegroupInterest = <?php echo json_encode(array_column($daily_data, 'lifegroup_interest')); ?>;
-        const texted = <?php echo json_encode(array_column($daily_data, 'texted')); ?>;
-        const startedOne2one = <?php echo json_encode(array_column($daily_data, 'started_one2one')); ?>;
-        
+        const serviceData = <?php echo json_encode(array_column($service_data, 'count')); ?>;
+        const serviceLabels = <?php echo json_encode(array_column($service_data, 'service_attended')); ?>;
+
         // Visitor Type totals
         const totalFirstTimers = <?php echo $total_first_timers; ?>;
         const totalVisitors = <?php echo $total_visitors; ?>;
-        const totalTexted = <?php echo $total_texted; ?>;
-        const totalOne2One = <?php echo $total_one2one; ?>;
-        const serviceData = <?php echo json_encode(array_column($service_data, 'count')); ?>;
-        const serviceLabels = <?php echo json_encode(array_column($service_data, 'service_attended')); ?>;
 
         // Format dates for display
         const formattedDates = dates.map(date => {
@@ -1095,6 +998,15 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
             gradient2: ['#FF8E53', '#FFBF69'],
             gradient3: ['#2EC4B6', '#25a898'],
             gradient4: ['#FF5A5F', '#E63946']
+        };
+
+        // Age group color mapping
+        const ageGroupColors = {
+            'Youth': '#FF6B35',
+            'Young Adult': '#FF9F1C',
+            'River Men': '#2EC4B6',
+            'River Women': '#FF5A5F',
+            'Seasoned': '#3A86FF'
         };
 
         // Visitor Type Chart (Doughnut with numbers)
@@ -1274,89 +1186,6 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
             }
         });
 
-        // Follow-up Progress Chart (Bar with numbers on bars)
-        const followupCtx = document.getElementById('followupChart').getContext('2d');
-        new Chart(followupCtx, {
-            type: 'bar',
-            data: {
-                labels: ['Texted', 'One-to-One'],
-                datasets: [{
-                    data: [totalTexted, totalOne2One],
-                    backgroundColor: [colors.warning, colors.accent],
-                    borderWidth: 0,
-                    borderRadius: 12,
-                    hoverBackgroundColor: ['#FFD166', '#FF7A80'],
-                    barPercentage: 0.6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: Math.max(totalTexted, totalOne2One) * 1.4,
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.06)',
-                            drawBorder: false
-                        },
-                        ticks: {
-                            font: { family: 'Inter', size: 12, weight: '500' },
-                            color: '#8C8C8C',
-                            padding: 10
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            font: {
-                                family: 'Inter',
-                                size: 14,
-                                weight: '700'
-                            },
-                            color: '#2A2D34',
-                            padding: 15
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(42, 45, 52, 0.95)',
-                        titleFont: { family: 'Inter', size: 14, weight: '600' },
-                        bodyFont: { family: 'Inter', size: 13, weight: '500' },
-                        padding: 14,
-                        cornerRadius: 10,
-                        boxPadding: 8,
-                        callbacks: {
-                            label: function(context) {
-                                return `${context.label}: ${context.raw}`;
-                            }
-                        }
-                    },
-                    datalabels: {
-                        color: '#fff',
-                        font: {
-                            family: 'Inter',
-                            weight: '700',
-                            size: window.innerWidth < 768 ? 15 : 18
-                        },
-                        formatter: function(value) {
-                            return value;
-                        },
-                        anchor: 'end',
-                        align: 'top',
-                        offset: 8
-                    }
-                }
-            },
-            plugins: [ChartDataLabels]
-        });
-
         // Service Attendance Chart (Doughnut with numbers)
         const serviceCtx = document.getElementById('serviceChart').getContext('2d');
         new Chart(serviceCtx, {
@@ -1429,6 +1258,13 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
             plugins: [ChartDataLabels]
         });
 
+        // Age group filter function
+        function filterAgeGroup(ageGroup) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('age_group', ageGroup);
+            window.location.href = url.toString();
+        }
+
         // Add animation to stat cards on hover
         document.addEventListener('DOMContentLoaded', function() {
             const statCards = document.querySelectorAll('.stat-card');
@@ -1453,3 +1289,18 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
     </script>
 </body>
 </html>
+
+<?php
+// Helper function to get age group colors
+function getAgeGroupColor($ageGroup) {
+    $colors = [
+        'Youth' => '#FF6B35',
+        'Young Adult' => '#FF9F1C',
+        'River Men' => '#2EC4B6',
+        'River Women' => '#FF5A5F',
+        'Seasoned' => '#3A86FF'
+    ];
+    
+    return $colors[$ageGroup] ?? '#8C8C8C';
+}
+?>
