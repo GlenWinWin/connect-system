@@ -622,7 +622,7 @@ $age_groups = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
             <?php endif; ?>
             
-            <form id="csvUploadForm" method="POST" action="upload_csv.php" enctype="multipart/form-data">
+            <form id="csvUploadForm" method="POST" action="upload-csv.php" enctype="multipart/form-data">
                 <div class="file-upload">
                     <input type="file" id="csv_file" name="csv_file" accept=".csv" class="file-input" required>
                     <p style="margin-top: 10px; color: var(--gray); font-size: 0.9em;">
