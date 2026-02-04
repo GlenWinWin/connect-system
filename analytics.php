@@ -526,92 +526,36 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
             font-weight: 600;
         }
 
-        /* Age Group Distribution */
-        .age-group-section {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 25px;
-            margin-bottom: 30px;
-            box-shadow: var(--shadow);
-            border: 1px solid rgba(255, 107, 53, 0.1);
-            position: relative;
+        /* Bar Chart Number Styles */
+        .bar-value-label {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--dark);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 10;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
-        
-        .age-group-section::before {
+
+        .bar-value-label::after {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 5px;
-            background: var(--orange-gradient);
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 4px solid var(--dark);
         }
-        
-        .age-group-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-        }
-        
-        .age-group-title {
-            font-family: 'Poppins', sans-serif;
-            font-size: 22px;
-            font-weight: 700;
-            color: var(--dark);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .age-group-title i {
-            color: var(--primary);
-        }
-        
-        .age-group-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-        }
-        
-        .age-group-card {
-            background: white;
-            border-radius: var(--border-radius-sm);
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: var(--transition);
-            border: 2px solid transparent;
-            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.1);
-        }
-        
-        .age-group-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.15);
-            border-color: var(--primary-light);
-        }
-        
-        .age-group-card.active {
-            border-color: var(--primary);
-            background: linear-gradient(135deg, rgba(255, 107, 53, 0.05) 0%, rgba(255, 159, 28, 0.05) 100%);
-        }
-        
-        .age-group-name {
-            font-family: 'Poppins', sans-serif;
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--dark);
-            margin-bottom: 10px;
-        }
-        
-        .age-group-count {
-            font-family: 'Poppins', sans-serif;
-            font-size: 32px;
-            font-weight: 800;
-            line-height: 1;
-            margin-bottom: 8px;
-        }
-        
+
         /* Empty State */
         .empty-state {
             text-align: center;
@@ -682,10 +626,6 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
             .filter-form {
                 grid-template-columns: 1fr;
             }
-            
-            .age-group-grid {
-                grid-template-columns: 1fr;
-            }
         }
 
         /* Animation */
@@ -709,7 +649,7 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
             }
         }
 
-        .stat-card, .chart-container, .age-group-section {
+        .stat-card, .chart-container {
             animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
             opacity: 0;
         }
@@ -720,7 +660,8 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
         .stat-card:nth-child(4) { animation-delay: 0.4s; }
         .chart-container:nth-child(1) { animation-delay: 0.5s; }
         .chart-container:nth-child(2) { animation-delay: 0.6s; }
-        .age-group-section { animation-delay: 0.7s; }
+        .chart-container:nth-child(3) { animation-delay: 0.7s; }
+        .chart-container:nth-child(4) { animation-delay: 0.8s; }
 
         /* Scrollbar Styling */
         ::-webkit-scrollbar {
@@ -924,36 +865,15 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Age Group Distribution -->
-            <div class="age-group-section">
-                <div class="age-group-header">
-                    <h2 class="age-group-title"><i class="fas fa-chart-pie"></i> Age Group Distribution</h2>
-                    <span style="color: var(--gray); font-weight: 600;">Total Visitors: <?php echo $total_visitors_all; ?></span>
-                </div>
-                
-                <div class="age-group-grid">
-                    <?php foreach ($age_group_data as $age_group): ?>
-                        <div class="age-group-card <?php echo $age_group_filter === $age_group['age_group'] ? 'active' : ''; ?>" 
-                             onclick="filterAgeGroup('<?php echo $age_group['age_group']; ?>')">
-                            <div class="age-group-name"><?php echo htmlspecialchars($age_group['age_group']); ?></div>
-                            <div class="age-group-count" style="color: <?php echo getAgeGroupColor($age_group['age_group']); ?>;">
-                                <?php echo $age_group['count']; ?>
-                            </div>
-                            <div style="color: var(--gray); font-size: 14px; font-weight: 600;">
-                                <?php echo $total_visitors_all > 0 ? round(($age_group['count'] / $total_visitors_all) * 100, 1) : 0; ?>%
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                    
-                    <?php if (empty($age_group_data)): ?>
-                        <div class="age-group-card">
-                            <div class="age-group-name">No Age Data</div>
-                            <div class="age-group-count" style="color: var(--gray);">0</div>
-                            <div style="color: var(--gray); font-size: 14px; font-weight: 600;">0%</div>
-                        </div>
-                    <?php endif; ?>
+                <!-- Age Group Distribution Chart -->
+                <div class="chart-container">
+                    <h3 class="chart-title">
+                        <i class="fas fa-chart-bar"></i> Age Group Distribution
+                    </h3>
+                    <div class="chart-wrapper">
+                        <canvas id="ageGroupChart"></canvas>
+                    </div>
                 </div>
             </div>
         <?php endif; ?>
@@ -967,9 +887,10 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
         const dates = <?php echo json_encode(array_column($daily_data, 'date')); ?>;
         const firstTimers = <?php echo json_encode(array_column($daily_data, 'first_timers')); ?>;
         const visitors = <?php echo json_encode(array_column($daily_data, 'visitors')); ?>;
-        const totals = <?php echo json_encode(array_column($daily_data, 'total')); ?>;
         const serviceData = <?php echo json_encode(array_column($service_data, 'count')); ?>;
         const serviceLabels = <?php echo json_encode(array_column($service_data, 'service_attended')); ?>;
+        const ageGroupData = <?php echo json_encode(array_column($age_group_data, 'count')); ?>;
+        const ageGroupLabels = <?php echo json_encode(array_column($age_group_data, 'age_group')); ?>;
 
         // Visitor Type totals
         const totalFirstTimers = <?php echo $total_first_timers; ?>;
@@ -1258,12 +1179,113 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
             plugins: [ChartDataLabels]
         });
 
-        // Age group filter function
-        function filterAgeGroup(ageGroup) {
-            const url = new URL(window.location.href);
-            url.searchParams.set('age_group', ageGroup);
-            window.location.href = url.toString();
-        }
+        // Age Group Distribution Chart (Bar with numbers ALWAYS VISIBLE)
+        const ageGroupCtx = document.getElementById('ageGroupChart').getContext('2d');
+        new Chart(ageGroupCtx, {
+            type: 'bar',
+            data: {
+                labels: ageGroupLabels,
+                datasets: [{
+                    data: ageGroupData,
+                    backgroundColor: ageGroupLabels.map(label => {
+                        return ageGroupColors[label] || colors.primary;
+                    }),
+                    borderWidth: 0,
+                    borderRadius: 10,
+                    hoverBackgroundColor: ageGroupLabels.map(label => {
+                        const baseColor = ageGroupColors[label] || colors.primary;
+                        // Lighten color for hover effect
+                        return baseColor.replace(')', ', 0.8)').replace('rgb', 'rgba');
+                    }),
+                    barPercentage: 0.7,
+                    categoryPercentage: 0.8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.06)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            font: { family: 'Inter', size: 12, weight: '500' },
+                            color: '#8C8C8C',
+                            padding: 10,
+                            callback: function(value) {
+                                return value;
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: { 
+                                family: 'Inter', 
+                                size: 13, 
+                                weight: '600' 
+                            },
+                            color: '#2A2D34',
+                            padding: 10,
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(42, 45, 52, 0.95)',
+                        titleFont: { family: 'Inter', size: 14, weight: '600' },
+                        bodyFont: { family: 'Inter', size: 13, weight: '500' },
+                        padding: 14,
+                        cornerRadius: 10,
+                        boxPadding: 8,
+                        callbacks: {
+                            label: function(context) {
+                                const total = ageGroupData.reduce((a, b) => a + b, 0);
+                                const percentage = total > 0 ? Math.round((context.raw / total) * 100) : 0;
+                                return `${context.label}: ${context.raw} (${percentage}%)`;
+                            }
+                        }
+                    },
+                    datalabels: {
+                        color: function(context) {
+                            // Make sure text is visible on all bar colors
+                            const barColor = context.dataset.backgroundColor[context.dataIndex];
+                            // Check if bar is light or dark
+                            const color = barColor.replace('rgb(', '').replace(')', '').split(',');
+                            const r = parseInt(color[0]);
+                            const g = parseInt(color[1]);
+                            const b = parseInt(color[2]);
+                            // Calculate luminance
+                            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+                            return luminance > 0.5 ? '#2A2D34' : 'white'; // Dark text on light bars, white text on dark bars
+                        },
+                        font: {
+                            family: 'Inter',
+                            weight: '700',
+                            size: window.innerWidth < 768 ? 14 : 16
+                        },
+                        formatter: function(value) {
+                            return value;
+                        },
+                        anchor: 'end',
+                        align: 'top',
+                        offset: 8,
+                        display: 'auto' // Always show the labels
+                    }
+                }
+            },
+            plugins: [ChartDataLabels]
+        });
 
         // Add animation to stat cards on hover
         document.addEventListener('DOMContentLoaded', function() {
@@ -1289,18 +1311,3 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
     </script>
 </body>
 </html>
-
-<?php
-// Helper function to get age group colors
-function getAgeGroupColor($ageGroup) {
-    $colors = [
-        'Youth' => '#FF6B35',
-        'Young Adult' => '#FF9F1C',
-        'River Men' => '#2EC4B6',
-        'River Women' => '#FF5A5F',
-        'Seasoned' => '#3A86FF'
-    ];
-    
-    return $colors[$ageGroup] ?? '#8C8C8C';
-}
-?>
