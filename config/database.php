@@ -1,9 +1,13 @@
 <?php
 // Database configuration
-define('DB_HOST', 'localhost');
-define('DB_USERNAME', 'root');
-define('DB_PASSWORD', '');
-define('DB_NAME', 'connect_db');
+require_once 'load_env.php';
+loadEnv();
+
+// Database configuration
+define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
+define('DB_USERNAME', getenv('DB_USERNAME') ?: 'root');
+define('DB_PASSWORD', getenv('DB_PASSWORD') ?: '');
+define('DB_NAME', getenv('DB_NAME') ?: 'connect_db');
 
 // Create database connection
 try {
