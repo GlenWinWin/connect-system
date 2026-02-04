@@ -1,8 +1,7 @@
 <?php
 // Database configuration
-require_once 'load_env.php';
+require_once __DIR__ . '/load_env.php';
 loadEnv();
-
 // Database configuration
 define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
 define('DB_USERNAME', getenv('DB_USERNAME') ?: 'root');

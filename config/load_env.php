@@ -1,8 +1,8 @@
 <?php
-// load_env.php
-function loadEnv($path = null) {
+// load_env.php - Compatible with older PHP
+function loadEnv($path = null): bool {
     if ($path === null) {
-        $path = __DIR__ . '/.env';
+        $path = __DIR__ . '/../.env';
     }
     
     if (!file_exists($path)) {
@@ -12,7 +12,8 @@ function loadEnv($path = null) {
     $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     
     foreach ($lines as $line) {
-        if (strpos(trim($line), '#') === 0) {
+        $line = trim($line);
+        if (empty($line) || $line[0] === '#') {
             continue;
         }
         
@@ -21,16 +22,24 @@ function loadEnv($path = null) {
             $key = trim(substr($line, 0, $pos));
             $value = trim(substr($line, $pos + 1));
             
-            // Remove quotes
-            if (($value[0] === '"' && $value[strlen($value)-1] === '"') ||
-                ($value[0] === "'" && $value[strlen($value)-1] === "'")) {
-                $value = substr($value, 1, -1);
+            // Remove surrounding quotes if present
+            $valueLength = strlen($value);
+            if ($valueLength >= 2) {
+                $firstChar = $value[0];
+                $lastChar = $value[$valueLength - 1];
+                
+                if (($firstChar === '"' && $lastChar === '"') || 
+                    ($firstChar === "'" && $lastChar === "'")) {
+                    $value = substr($value, 1, -1);
+                }
             }
             
             if (!getenv($key)) {
                 putenv("$key=$value");
             }
+            
             $_ENV[$key] = $value;
+            $_SERVER[$key] = $value;
         }
     }
     
