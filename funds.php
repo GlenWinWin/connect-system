@@ -11,6 +11,9 @@ if (!isset($_SESSION['funds_authenticated']) || $_SESSION['funds_authenticated']
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password'])) {
         if ($_POST['password'] === $page_password) {
             $_SESSION['funds_authenticated'] = true;
+            // Redirect to clear POST data and show funds page
+            echo "<script>window.location.href = 'funds.php';</script>";
+            exit();
         } else {
             $error = "Incorrect password.";
         }
@@ -1197,9 +1200,6 @@ if (isset($_GET['success'])) {
                     </div>
                     
                     <div class="modal-actions">
-                        <button type="button" class="btn btn-secondary btn-block" onclick="clearModalContributions()">
-                            <i class="fas fa-eraser"></i> Clear All
-                        </button>
                         <button type="submit" class="btn btn-primary btn-block" id="saveModalBtn">
                             <i class="fas fa-save"></i> Save Changes
                         </button>
@@ -1309,26 +1309,6 @@ if (isset($_GET['success'])) {
             // Calculate new total
             const total = currentModalContributions.reduce((sum, amount) => sum + (parseFloat(amount) || 0), 0);
             document.getElementById('modalTotal').textContent = `₱${total.toFixed(2)}`;
-        }
-        
-        // Clear modal contributions
-        function clearModalContributions() {
-            if (confirm('Clear all contributions for this member?')) {
-                currentModalContributions = Array(12).fill(0);
-                
-                // Clear all inputs
-                document.querySelectorAll('#monthsContainer .modal-input').forEach(input => {
-                    input.value = '';
-                    input.classList.remove('has-value');
-                    const event = new Event('input');
-                    input.dispatchEvent(event);
-                });
-                
-                // Update total
-                document.getElementById('modalTotal').textContent = '₱0.00';
-                
-                showNotification('Contributions cleared', 'info');
-            }
         }
         
         // Handle form submission
