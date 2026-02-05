@@ -530,6 +530,7 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
         .chart-wrapper {
             height: 320px;
             position: relative;
+            width: 100%;
         }
 
         /* Chart Number Overlays */
@@ -568,7 +569,16 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
             font-weight: 600;
         }
 
-        /* Age Group Bar Value Styles */
+        /* Simple Hover Effects */
+        .chart-wrapper canvas {
+            transition: var(--transition);
+        }
+
+        .chart-wrapper:hover canvas {
+            filter: brightness(1.05);
+        }
+
+        /* Age Group Bar Value Styles - WHITE TEXT */
         .bar-value-container {
             position: absolute;
             display: flex;
@@ -582,29 +592,27 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
             font-family: 'Poppins', sans-serif;
             font-size: 16px;
             font-weight: 800;
-            padding: 6px 10px;
-            border-radius: 8px;
-            margin-bottom: 4px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+            padding: 4px 8px;
+            border-radius: 6px;
+            margin-bottom: 2px;
             white-space: nowrap;
-            color: white;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-            background: rgba(42, 45, 52, 0.9);
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            min-width: 50px;
+            color: white !important; /* Force white color */
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8); /* Stronger shadow for better visibility */
+            background: rgba(0, 0, 0, 0.7); /* Dark background for contrast */
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            min-width: 40px;
             text-align: center;
         }
 
         .bar-value-percentage {
             font-size: 12px;
             font-weight: 700;
-            color: white;
+            color: white !important; /* Force white color */
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); /* Stronger shadow */
             background: rgba(255, 107, 53, 0.9);
-            padding: 4px 8px;
-            border-radius: 6px;
-            box-shadow: 0 3px 10px rgba(255, 107, 53, 0.3);
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
         }
 
         /* Empty State */
@@ -668,6 +676,11 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
 
             .charts-grid {
                 grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .chart-container {
+                padding: 20px;
             }
 
             .stat-number {
@@ -680,13 +693,54 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
 
             .bar-value-number {
                 font-size: 14px;
-                padding: 4px 8px;
-                min-width: 45px;
+                padding: 3px 6px;
+                min-width: 35px;
             }
 
             .bar-value-percentage {
                 font-size: 10px;
-                padding: 3px 6px;
+                padding: 1px 4px;
+            }
+
+            .doughnut-center-text {
+                width: 80px;
+                height: 80px;
+            }
+
+            .center-total {
+                font-size: 20px;
+            }
+
+            .center-label {
+                font-size: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .chart-wrapper {
+                height: 250px;
+            }
+            
+            .charts-grid {
+                gap: 15px;
+            }
+            
+            .chart-container {
+                padding: 15px;
+            }
+            
+            .chart-title {
+                font-size: 18px;
+                margin-bottom: 20px;
+            }
+            
+            .doughnut-center-text {
+                width: 70px;
+                height: 70px;
+            }
+            
+            .center-total {
+                font-size: 18px;
             }
         }
 
@@ -699,15 +753,6 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
             to {
                 opacity: 1;
                 transform: translateY(0);
-            }
-        }
-
-        @keyframes float {
-            0%, 100% {
-                transform: translateY(0);
-            }
-            50% {
-                transform: translateY(-10px);
             }
         }
 
@@ -896,7 +941,7 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                     </div>
                 </div>
 
-                <!-- Daily Trend Chart -->
+                <!-- Daily Trend Chart (NO NUMBERS) -->
                 <div class="chart-container">
                     <h3 class="chart-title">
                         <i class="fas fa-chart-line"></i> Daily Visitor Trend
@@ -928,7 +973,7 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                     </div>
                 </div>
 
-                <!-- Age Group Distribution Chart -->
+                <!-- Age Group Distribution Chart (WHITE NUMBERS) -->
                 <div class="chart-container">
                     <h3 class="chart-title">
                         <i class="fas fa-chart-bar"></i> Age Group Distribution
@@ -995,7 +1040,7 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
             'Seasoned': '#3A86FF'
         };
 
-        // Visitor Type Chart (Doughnut with numbers) - UPDATED with dynamic connected data
+        // Visitor Type Chart (Doughnut with numbers)
         const visitorTypeCtx = document.getElementById('visitorTypeChart').getContext('2d');
         new Chart(visitorTypeCtx, {
             type: 'doughnut',
@@ -1006,13 +1051,19 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                     backgroundColor: [colors.primary, colors.secondary, colors.success],
                     borderWidth: 0,
                     hoverBackgroundColor: [colors.primaryLight, '#FFB347', '#4DD0C6'],
-                    hoverBorderWidth: 0
+                    hoverBorderWidth: 0,
+                    hoverBorderColor: 'white',
+                    hoverBorderWidth: 2
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 cutout: '70%',
+                hover: {
+                    mode: 'nearest',
+                    intersect: true
+                },
                 plugins: {
                     legend: {
                         position: window.innerWidth < 768 ? 'bottom' : 'right',
@@ -1022,13 +1073,14 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                             pointStyle: 'circle',
                             font: {
                                 family: 'Inter',
-                                size: 13,
+                                size: window.innerWidth < 768 ? 11 : 13,
                                 weight: '600'
                             },
                             color: '#2A2D34'
                         }
                     },
                     tooltip: {
+                        enabled: true,
                         backgroundColor: 'rgba(42, 45, 52, 0.95)',
                         titleFont: { family: 'Inter', size: 14, weight: '600' },
                         bodyFont: { family: 'Inter', size: 13, weight: '500' },
@@ -1041,7 +1093,6 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                                 const percentage = total > 0 ? Math.round((context.raw / total) * 100) : 0;
                                 let description = context.label;
                                 
-                                // Add description for connected if it's 0
                                 if (context.label === 'Connected' && context.raw === 0) {
                                     description = 'Connected (No one-to-one started yet)';
                                 }
@@ -1055,22 +1106,20 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                         font: {
                             family: 'Inter',
                             weight: '700',
-                            size: window.innerWidth < 768 ? 12 : 14
+                            size: window.innerWidth < 768 ? 10 : 14
                         },
                         formatter: function(value, context) {
                             const total = totalVisitorsAll;
                             const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
                             
-                            // Don't show 0 values for Connected
                             if (context.dataIndex === 2 && value === 0) {
-                                return '0%\n(Not started)';
+                                return window.innerWidth < 768 ? '0%' : '0%\n(Not started)';
                             }
                             
-                            return value > 0 ? `${value}\n(${percentage}%)` : '';
+                            return value > 0 ? (window.innerWidth < 768 ? `${percentage}%` : `${value}\n(${percentage}%)`) : '';
                         },
                         display: function(context) {
                             const value = context.dataset.data[context.dataIndex];
-                            // Always show Connected even if 0
                             if (context.dataIndex === 2) {
                                 return true;
                             }
@@ -1082,7 +1131,7 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
             plugins: [ChartDataLabels]
         });
 
-        // Daily Trend Chart (Line chart WITHOUT numbers on points)
+        // Daily Trend Chart (Line chart - NO NUMBERS)
         const dailyTrendCtx = document.getElementById('dailyTrendChart').getContext('2d');
         new Chart(dailyTrendCtx, {
             type: 'line',
@@ -1099,9 +1148,9 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                         pointBackgroundColor: colors.primary,
                         pointBorderColor: '#fff',
                         pointBorderWidth: 3,
-                        pointRadius: 5,
-                        pointHoverRadius: 8,
-                        borderWidth: 3,
+                        pointRadius: window.innerWidth < 768 ? 4 : 5,
+                        pointHoverRadius: window.innerWidth < 768 ? 6 : 8,
+                        borderWidth: window.innerWidth < 768 ? 2 : 3,
                         pointHoverBackgroundColor: colors.primaryLight
                     },
                     {
@@ -1114,9 +1163,9 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                         pointBackgroundColor: colors.secondary,
                         pointBorderColor: '#fff',
                         pointBorderWidth: 3,
-                        pointRadius: 5,
-                        pointHoverRadius: 8,
-                        borderWidth: 3,
+                        pointRadius: window.innerWidth < 768 ? 4 : 5,
+                        pointHoverRadius: window.innerWidth < 768 ? 6 : 8,
+                        borderWidth: window.innerWidth < 768 ? 2 : 3,
                         pointHoverBackgroundColor: '#FFB347'
                     }
                 ]
@@ -1124,6 +1173,10 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                hover: {
+                    mode: 'index',
+                    intersect: false
+                },
                 scales: {
                     y: {
                         beginAtZero: true,
@@ -1132,7 +1185,7 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                             drawBorder: false
                         },
                         ticks: {
-                            font: { family: 'Inter', size: 12, weight: '500' },
+                            font: { family: 'Inter', size: window.innerWidth < 768 ? 10 : 12, weight: '500' },
                             color: '#8C8C8C',
                             padding: 10
                         }
@@ -1143,10 +1196,10 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                             drawBorder: false
                         },
                         ticks: {
-                            font: { family: 'Inter', size: 11, weight: '500' },
+                            font: { family: 'Inter', size: window.innerWidth < 768 ? 9 : 11, weight: '500' },
                             color: '#8C8C8C',
-                            maxRotation: 45,
-                            minRotation: 45,
+                            maxRotation: window.innerWidth < 768 ? 90 : 45,
+                            minRotation: window.innerWidth < 768 ? 90 : 45,
                             padding: 10
                         }
                     }
@@ -1160,13 +1213,14 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                             pointStyle: 'circle',
                             font: {
                                 family: 'Inter',
-                                size: 13,
+                                size: window.innerWidth < 768 ? 11 : 13,
                                 weight: '600'
                             },
                             color: '#2A2D34'
                         }
                     },
                     tooltip: {
+                        enabled: true,
                         backgroundColor: 'rgba(42, 45, 52, 0.95)',
                         titleFont: { family: 'Inter', size: 14, weight: '600' },
                         bodyFont: { family: 'Inter', size: 13, weight: '500' },
@@ -1200,13 +1254,19 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                     backgroundColor: [colors.primary, colors.secondary, colors.success, colors.warning, colors.accent],
                     borderWidth: 0,
                     hoverBackgroundColor: [colors.primaryLight, '#FFB347', '#4DD0C6', '#FFD166', '#FF7A80'],
-                    hoverBorderWidth: 0
+                    hoverBorderWidth: 0,
+                    hoverBorderColor: 'white',
+                    hoverBorderWidth: 2
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 cutout: '70%',
+                hover: {
+                    mode: 'nearest',
+                    intersect: true
+                },
                 plugins: {
                     legend: {
                         position: window.innerWidth < 768 ? 'bottom' : 'right',
@@ -1216,13 +1276,14 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                             pointStyle: 'circle',
                             font: {
                                 family: 'Inter',
-                                size: 13,
+                                size: window.innerWidth < 768 ? 11 : 13,
                                 weight: '600'
                             },
                             color: '#2A2D34'
                         }
                     },
                     tooltip: {
+                        enabled: true,
                         backgroundColor: 'rgba(42, 45, 52, 0.95)',
                         titleFont: { family: 'Inter', size: 14, weight: '600' },
                         bodyFont: { family: 'Inter', size: 13, weight: '500' },
@@ -1242,18 +1303,18 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                         font: {
                             family: 'Inter',
                             weight: '700',
-                            size: window.innerWidth < 768 ? 12 : 14
+                            size: window.innerWidth < 768 ? 10 : 14
                         },
                         formatter: function(value, context) {
                             const total = context.dataset.data.reduce((a, b) => a + b, 0);
                             const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-                            return value > 0 ? `${value}\n(${percentage}%)` : '';
+                            return value > 0 ? (window.innerWidth < 768 ? `${percentage}%` : `${value}\n(${percentage}%)`) : '';
                         },
                         display: function(context) {
                             const value = context.dataset.data[context.dataIndex];
                             const total = context.dataset.data.reduce((a, b) => a + b, 0);
                             const percentage = (value / total) * 100;
-                            return percentage > 12; // Only show for segments > 12%
+                            return percentage > 12;
                         }
                     }
                 }
@@ -1276,16 +1337,21 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                     borderRadius: 10,
                     hoverBackgroundColor: ageGroupLabels.map(label => {
                         const baseColor = ageGroupColors[label] || colors.primary;
-                        // Lighten color for hover effect
                         return baseColor.replace(')', ', 0.8)').replace('rgb', 'rgba');
                     }),
-                    barPercentage: 0.7,
-                    categoryPercentage: 0.8
+                    hoverBorderColor: 'white',
+                    hoverBorderWidth: 2,
+                    barPercentage: window.innerWidth < 768 ? 0.6 : 0.7,
+                    categoryPercentage: window.innerWidth < 768 ? 0.7 : 0.8
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                hover: {
+                    mode: 'nearest',
+                    intersect: true
+                },
                 scales: {
                     y: {
                         beginAtZero: true,
@@ -1294,7 +1360,7 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                             drawBorder: false
                         },
                         ticks: {
-                            font: { family: 'Inter', size: 12, weight: '500' },
+                            font: { family: 'Inter', size: window.innerWidth < 768 ? 10 : 12, weight: '500' },
                             color: '#8C8C8C',
                             padding: 10,
                             callback: function(value) {
@@ -1309,13 +1375,13 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                         ticks: {
                             font: { 
                                 family: 'Inter', 
-                                size: 13, 
+                                size: window.innerWidth < 768 ? 11 : 13, 
                                 weight: '600' 
                             },
                             color: '#2A2D34',
                             padding: 10,
-                            maxRotation: 45,
-                            minRotation: 45
+                            maxRotation: window.innerWidth < 768 ? 90 : 45,
+                            minRotation: window.innerWidth < 768 ? 90 : 45
                         }
                     }
                 },
@@ -1324,6 +1390,7 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                         display: false
                     },
                     tooltip: {
+                        enabled: true,
                         backgroundColor: 'rgba(42, 45, 52, 0.95)',
                         titleFont: { family: 'Inter', size: 14, weight: '600' },
                         bodyFont: { family: 'Inter', size: 13, weight: '500' },
@@ -1371,7 +1438,7 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                 
                 // Position at top of bar
                 const x = bar.x;
-                const y = bar.y - 20; // Position above the bar
+                const y = bar.y - 15;
                 
                 const labelContainer = document.createElement('div');
                 labelContainer.className = 'bar-value-container';
@@ -1411,6 +1478,17 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
             if (ageGroupChart) {
                 setTimeout(() => addBarValueLabels(ageGroupChart), 100);
             }
+        });
+
+        // Simple hover effect for charts
+        document.querySelectorAll('.chart-wrapper').forEach(wrapper => {
+            wrapper.addEventListener('mouseenter', function() {
+                this.style.cursor = 'pointer';
+            });
+            
+            wrapper.addEventListener('mouseleave', function() {
+                this.style.cursor = 'default';
+            });
         });
     </script>
 </body>
