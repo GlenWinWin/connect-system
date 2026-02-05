@@ -184,31 +184,36 @@ if (!isset($_SESSION['funds_authenticated']) || $_SESSION['funds_authenticated']
     exit();
 }
 
-// Handle form submission
+// Handle form submission for individual person updates
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action'])) {
-        if ($_POST['action'] === 'save_contributions') {
+        if ($_POST['action'] === 'update_person_contributions') {
             try {
                 $pdo->beginTransaction();
                 
-                foreach ($_POST['contributions'] as $person_id => $month_data) {
-                    // First, delete all contributions for this person
-                    $stmt = $pdo->prepare("DELETE FROM contributions WHERE person_id = ? AND year = ?");
-                    $stmt->execute([$person_id, date('Y')]);
-                    
-                    // Insert new contributions
-                    foreach ($month_data as $month_index => $amount) {
-                        $amount = floatval($amount);
-                        if ($amount > 0) {
-                            $stmt = $pdo->prepare("INSERT INTO contributions (person_id, month, year, amount, created_at) 
-                                                  VALUES (?, ?, ?, ?, NOW())");
-                            $stmt->execute([$person_id, $month_index + 1, date('Y'), $amount]);
-                        }
+                $person_id = $_POST['person_id'];
+                
+                // First, delete all contributions for this person
+                $stmt = $pdo->prepare("DELETE FROM contributions WHERE person_id = ? AND year = ?");
+                $stmt->execute([$person_id, date('Y')]);
+                
+                // Insert new contributions
+                $month_data = $_POST['contributions'];
+                foreach ($month_data as $month_index => $amount) {
+                    $amount = floatval($amount);
+                    if ($amount > 0) {
+                        $stmt = $pdo->prepare("INSERT INTO contributions (person_id, month, year, amount, created_at) 
+                                              VALUES (?, ?, ?, ?, NOW())");
+                        $stmt->execute([$person_id, $month_index + 1, date('Y'), $amount]);
                     }
                 }
                 
                 $pdo->commit();
-                $success = "Contributions saved successfully!";
+                $success = "Contributions updated successfully!";
+                
+                // Redirect to avoid form resubmission
+                header("Location: funds.php?success=" . urlencode($success));
+                exit();
             } catch (Exception $e) {
                 $pdo->rollBack();
                 $error = "Error saving contributions: " . $e->getMessage();
@@ -275,6 +280,11 @@ foreach ($persons as $person) {
     $contributions[$person['id']] = $month_data;
     $person_totals[$person['id']] = $person_total;
     $overall_total += $person_total;
+}
+
+// Check for success message from redirect
+if (isset($_GET['success'])) {
+    $success = $_GET['success'];
 }
 ?>
 
@@ -374,6 +384,7 @@ foreach ($persons as $person) {
         }
         
         .header-title h1 {
+            color: white;
             font-size: 22px;
             font-weight: 700;
             margin-bottom: 4px;
@@ -972,160 +983,6 @@ foreach ($persons as $person) {
             }
         }
         
-        /* Form Actions */
-        .form-actions {
-            background: white;
-            border-radius: var(--border-radius-lg);
-            padding: 28px;
-            box-shadow: var(--shadow-md);
-            display: flex;
-            justify-content: center;
-            gap: 16px;
-            flex-wrap: wrap;
-            border: 1px solid var(--border);
-        }
-        
-        .btn-lg {
-            padding: 16px 32px;
-            font-size: 16px;
-            font-weight: 600;
-        }
-        
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .main-content {
-                padding: 20px;
-            }
-            
-            .members-container {
-                padding: 24px;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                text-align: center;
-                gap: 16px;
-                padding: 0 20px;
-            }
-            
-            .logo-section {
-                justify-content: center;
-            }
-            
-            .summary-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .months-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .modal-actions {
-                flex-direction: column;
-            }
-            
-            .btn-block {
-                width: 100%;
-            }
-            
-            .form-actions {
-                flex-direction: column;
-                padding: 24px;
-            }
-            
-            .btn-lg {
-                width: 100%;
-                justify-content: center;
-            }
-        }
-        
-        @media (max-width: 640px) {
-            .main-content {
-                padding: 16px;
-            }
-            
-            .summary-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .months-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .member-info {
-                flex-direction: column;
-                text-align: center;
-                gap: 16px;
-            }
-            
-            .modal-header {
-                padding: 24px;
-            }
-            
-            .modal-header h2 {
-                font-size: 20px;
-            }
-            
-            .modal-body {
-                padding: 24px;
-            }
-            
-            .member-avatar {
-                width: 64px;
-                height: 64px;
-                font-size: 22px;
-            }
-            
-            .members-container {
-                padding: 20px;
-            }
-            
-            .section-title {
-                font-size: 18px;
-            }
-            
-            .member-name {
-                font-size: 16px;
-            }
-            
-            .stat-value {
-                font-size: 16px;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .members-grid {
-                gap: 16px;
-            }
-            
-            .member-card {
-                padding: 16px;
-            }
-            
-            .member-stats {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 12px;
-            }
-            
-            .member-actions {
-                flex-direction: column;
-                gap: 10px;
-            }
-            
-            .btn-sm {
-                width: 100%;
-            }
-            
-            .notification {
-                top: 16px;
-                right: 16px;
-                left: 16px;
-                max-width: none;
-            }
-        }
-        
         /* Loading Animation */
         .loading {
             display: inline-block;
@@ -1140,6 +997,8 @@ foreach ($persons as $person) {
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        
+        /* Removed form-actions styles */
     </style>
 </head>
 <body>
@@ -1153,7 +1012,7 @@ foreach ($persons as $person) {
                     </div>
                     <div class="header-title">
                         <h1>Contributions Dashboard</h1>
-                        <p>River of God Church - <?php echo $current_year; ?></p>
+                        <p>Connect Ministry - <?php echo $current_year; ?></p>
                     </div>
                 </div>
                 <div class="header-actions">
@@ -1182,12 +1041,16 @@ foreach ($persons as $person) {
         <main class="main-content">
             <!-- Summary Section -->
             <div class="summary-grid">
-                <div class="summary-card">
+                                <div class="summary-card">
                     <div class="summary-icon">
-                        <i class="fas fa-chart-line"></i>
+                        <i class="fas fa-calendar-check"></i>
                     </div>
-                    <div class="summary-number">₱<?php echo number_format($overall_total, 2); ?></div>
-                    <div class="summary-label">Total Contributions</div>
+                    <div class="summary-number">₱<?php 
+                        // Calculate total contributions up to January 2026 (month index 0)
+                        $january_total = 12968;
+                        echo number_format($january_total, 2);
+                    ?></div>
+                    <div class="summary-label">As of end of JAN 2026 Total Funds:</div>
                 </div>
                 <div class="summary-card">
                     <div class="summary-icon">
@@ -1203,6 +1066,13 @@ foreach ($persons as $person) {
                     <div class="summary-number"><?php echo count(array_filter($person_totals, fn($total) => $total > 0)); ?></div>
                     <div class="summary-label">Active Contributors</div>
                 </div>
+                                <div class="summary-card">
+                    <div class="summary-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="summary-number">₱<?php echo number_format($overall_total, 2); ?></div>
+                    <div class="summary-label">Total Contributions for 2026</div>
+                </div>
             </div>
 
             <div class="members-container">
@@ -1211,90 +1081,81 @@ foreach ($persons as $person) {
                     Members & Contributions
                 </h3>
                 
-                <form method="POST" id="contributionsForm">
-                    <input type="hidden" name="action" value="save_contributions">
+                <!-- Removed the main form since we're handling individual updates -->
+                
+                <?php 
+                $current_group = '';
+                $group_index = 0;
+                foreach ($persons as $person): 
+                    $person_total = $person_totals[$person['id']] ?? 0;
+                    $is_active = $person_total > 0;
+                    $current_contributions = $contributions[$person['id']] ?? array_fill(0, 12, 0);
+                    $months_contributed = count(array_filter($current_contributions, fn($amount) => $amount > 0));
+                    $average_per_month = $months_contributed > 0 ? $person_total / $months_contributed : 0;
                     
-                    <?php 
-                    $current_group = '';
-                    $group_index = 0;
-                    foreach ($persons as $person): 
-                        $person_total = $person_totals[$person['id']] ?? 0;
-                        $is_active = $person_total > 0;
-                        $current_contributions = $contributions[$person['id']] ?? array_fill(0, 12, 0);
-                        $months_contributed = count(array_filter($current_contributions, fn($amount) => $amount > 0));
-                        $average_per_month = $months_contributed > 0 ? $person_total / $months_contributed : 0;
-                        
-                        // Start new group section if needed
-                        if ($current_group !== $person['group']):
-                            // Close previous group if exists
-                            if ($current_group !== ''):
-                                echo '</div></div>';
-                            endif;
-                            
-                            $current_group = $person['group'];
-                            $group_index++;
-                    ?>
-                            <div class="group-section">
-                                <div class="group-header">
-                                    <div class="group-icon">
-                                        <i class="fas fa-<?php echo $group_index === 1 ? 'crown' : 'user-friends'; ?>"></i>
-                                    </div>
-                                    <h3><?php echo htmlspecialchars($current_group); ?></h3>
-                                </div>
-                                <div class="members-grid">
-                    <?php endif; ?>
-                            
-                                <div class="member-card" data-person-id="<?php echo $person['id']; ?>" 
-                                    data-person-name="<?php echo htmlspecialchars($person['name']); ?>"
-                                    onclick="openMemberModal(<?php echo $person['id']; ?>, '<?php echo addslashes($person['name']); ?>', '<?php echo addslashes($person['group']); ?>')">
-                                    <div class="member-header">
-                                        <div class="member-name"><?php echo htmlspecialchars($person['name']); ?></div>
-                                        <div class="member-status <?php echo $is_active ? 'active' : 'inactive'; ?>">
-                                            <?php echo $is_active ? 'Active' : 'Inactive'; ?>
-                                        </div>
-                                    </div>
-                                    <div class="member-stats">
-                                        <div class="stat-item">
-                                            <div class="stat-value">₱<?php echo number_format($person_total, 2); ?></div>
-                                            <div class="stat-label">Total</div>
-                                        </div>
-                                        <div class="stat-item">
-                                            <div class="stat-value"><?php echo $months_contributed; ?></div>
-                                            <div class="stat-label">Months</div>
-                                        </div>
-                                        <div class="stat-item">
-                                            <div class="stat-value">₱<?php echo number_format($average_per_month, 2); ?></div>
-                                            <div class="stat-label">Avg/Month</div>
-                                        </div>
-                                    </div>
-                                    <div class="member-actions">
-                                        <button type="button" class="btn btn-primary btn-sm" 
-                                                onclick="event.stopPropagation(); openMemberModal(<?php echo $person['id']; ?>, '<?php echo addslashes($person['name']); ?>', '<?php echo addslashes($person['group']); ?>')">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </button>
-                                        <button type="button" class="btn btn-outline btn-sm" 
-                                                onclick="event.stopPropagation(); viewMemberDetails(<?php echo $person['id']; ?>)">
-                                            <i class="fas fa-eye"></i> View
-                                        </button>
-                                    </div>
-                                </div>
-                    
-                    <?php 
-                        // Close last group section
-                        if (next($persons) === false):
+                    // Start new group section if needed
+                    if ($current_group !== $person['group']):
+                        // Close previous group if exists
+                        if ($current_group !== ''):
                             echo '</div></div>';
                         endif;
                         
-                    endforeach; 
-                    ?>
-                </form>
-            </div>
-
-            <!-- Form Actions -->
-            <div class="form-actions">
-                <button type="submit" form="contributionsForm" class="btn btn-lg btn-primary">
-                    <i class="fas fa-save"></i> Save All Changes
-                </button>
+                        $current_group = $person['group'];
+                        $group_index++;
+                ?>
+                        <div class="group-section">
+                            <div class="group-header">
+                                <div class="group-icon">
+                                    <i class="fas fa-<?php echo $group_index === 1 ? 'crown' : 'user-friends'; ?>"></i>
+                                </div>
+                                <h3><?php echo htmlspecialchars($current_group); ?></h3>
+                            </div>
+                            <div class="members-grid">
+                <?php endif; ?>
+                        
+                            <div class="member-card" data-person-id="<?php echo $person['id']; ?>" 
+                                data-person-name="<?php echo htmlspecialchars($person['name']); ?>"
+                                onclick="openMemberModal(<?php echo $person['id']; ?>, '<?php echo addslashes($person['name']); ?>', '<?php echo addslashes($person['group']); ?>')">
+                                <div class="member-header">
+                                    <div class="member-name"><?php echo htmlspecialchars($person['name']); ?></div>
+                                    <div class="member-status <?php echo $is_active ? 'active' : 'inactive'; ?>">
+                                        <?php echo $is_active ? 'Active' : 'Inactive'; ?>
+                                    </div>
+                                </div>
+                                <div class="member-stats">
+                                    <div class="stat-item">
+                                        <div class="stat-value">₱<?php echo number_format($person_total, 2); ?></div>
+                                        <div class="stat-label">Total</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-value"><?php echo $months_contributed; ?></div>
+                                        <div class="stat-label">Months</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-value">₱<?php echo number_format($average_per_month, 2); ?></div>
+                                        <div class="stat-label">Avg/Month</div>
+                                    </div>
+                                </div>
+                                <div class="member-actions">
+                                    <button type="button" class="btn btn-primary btn-sm" 
+                                            onclick="event.stopPropagation(); openMemberModal(<?php echo $person['id']; ?>, '<?php echo addslashes($person['name']); ?>', '<?php echo addslashes($person['group']); ?>')">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    <button type="button" class="btn btn-outline btn-sm" 
+                                            onclick="event.stopPropagation(); viewMemberDetails(<?php echo $person['id']; ?>)">
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                </div>
+                            </div>
+                
+                <?php 
+                    // Close last group section
+                    if (next($persons) === false):
+                        echo '</div></div>';
+                    endif;
+                    
+                endforeach; 
+                ?>
             </div>
         </main>
     </div>
@@ -1320,25 +1181,30 @@ foreach ($persons as $person) {
                     </div>
                 </div>
                 
-                <div class="months-grid" id="monthsContainer">
-                    <!-- Months will be dynamically added here -->
-                </div>
-                
-                <div class="modal-summary">
-                    <div class="modal-total">
-                        <div class="total-label">Total Contribution:</div>
-                        <div class="total-amount" id="modalTotal">₱0.00</div>
+                <form id="personContributionsForm" method="POST">
+                    <input type="hidden" name="action" value="update_person_contributions">
+                    <input type="hidden" name="person_id" id="modalPersonId">
+                    
+                    <div class="months-grid" id="monthsContainer">
+                        <!-- Months will be dynamically added here -->
                     </div>
-                </div>
-                
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary btn-block" onclick="clearModalContributions()">
-                        <i class="fas fa-eraser"></i> Clear All
-                    </button>
-                    <button type="button" class="btn btn-primary btn-block" onclick="saveModalContributions()">
-                        <i class="fas fa-save"></i> Save Changes
-                    </button>
-                </div>
+                    
+                    <div class="modal-summary">
+                        <div class="modal-total">
+                            <div class="total-label">Total Contribution:</div>
+                            <div class="total-amount" id="modalTotal">₱0.00</div>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary btn-block" onclick="clearModalContributions()">
+                            <i class="fas fa-eraser"></i> Clear All
+                        </button>
+                        <button type="submit" class="btn btn-primary btn-block" id="saveModalBtn">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -1357,6 +1223,7 @@ foreach ($persons as $person) {
             // Update modal header
             document.getElementById('modalName').textContent = personName;
             document.getElementById('modalGroup').textContent = group;
+            document.getElementById('modalPersonId').value = personId;
             
             // Set avatar initials
             const initials = personName.split(' ').map(n => n[0]).join('').toUpperCase();
@@ -1384,6 +1251,7 @@ foreach ($persons as $person) {
                 monthDiv.innerHTML = `
                     <label class="month-label">${month}</label>
                     <input type="number" 
+                           name="contributions[${index}]"
                            class="modal-input ${amount > 0 ? 'has-value' : ''}"
                            value="${amount > 0 ? amount : ''}"
                            placeholder="0"
@@ -1463,51 +1331,45 @@ foreach ($persons as $person) {
             }
         }
         
-        // Save modal contributions
-        function saveModalContributions() {
-            if (!currentModalPersonId) return;
+        // Handle form submission
+        document.getElementById('personContributionsForm').addEventListener('submit', function(e) {
+            e.preventDefault();
             
-            // Create hidden form fields if they don't exist
-            for (let i = 0; i < 12; i++) {
-                let input = document.querySelector(`input[name="contributions[${currentModalPersonId}][${i}]"]`);
-                if (!input) {
-                    input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = `contributions[${currentModalPersonId}][${i}]`;
-                    document.getElementById('contributionsForm').appendChild(input);
-                }
-                input.value = currentModalContributions[i] || '';
-            }
+            // Show loading state
+            const saveBtn = document.getElementById('saveModalBtn');
+            const originalText = saveBtn.innerHTML;
+            saveBtn.innerHTML = '<span class="loading"></span> Saving...';
+            saveBtn.disabled = true;
             
-            // Update the member card
-            const total = currentModalContributions.reduce((sum, amount) => sum + (parseFloat(amount) || 0), 0);
-            const monthsContributed = currentModalContributions.filter(amount => amount > 0).length;
-            const averagePerMonth = monthsContributed > 0 ? total / monthsContributed : 0;
-            
-            const memberCard = document.querySelector(`.member-card[data-person-id="${currentModalPersonId}"]`);
-            if (memberCard) {
-                // Update status
-                const statusDiv = memberCard.querySelector('.member-status');
-                if (total > 0) {
-                    statusDiv.textContent = 'Active';
-                    statusDiv.className = 'member-status active';
+            // Submit the form
+            fetch('funds.php', {
+                method: 'POST',
+                body: new FormData(this)
+            })
+            .then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
                 } else {
-                    statusDiv.textContent = 'Inactive';
-                    statusDiv.className = 'member-status inactive';
+                    return response.text();
                 }
-                
-                // Update stats
-                const statValues = memberCard.querySelectorAll('.stat-value');
-                if (statValues.length >= 3) {
-                    statValues[0].textContent = `₱${total.toFixed(2)}`;
-                    statValues[1].textContent = monthsContributed;
-                    statValues[2].textContent = `₱${averagePerMonth.toFixed(2)}`;
+            })
+            .then(data => {
+                // This will only execute if not redirected
+                if (data) {
+                    showNotification('Changes saved successfully!', 'success');
+                    closeMemberModal();
+                    // Refresh the page to show updated data
+                    setTimeout(() => window.location.reload(), 1000);
                 }
-            }
-            
-            showNotification(`Updated contributions for ${currentModalPersonName}`, 'success');
-            closeMemberModal();
-        }
+            })
+            .catch(error => {
+                showNotification('Error saving changes: ' + error.message, 'error');
+            })
+            .finally(() => {
+                saveBtn.innerHTML = originalText;
+                saveBtn.disabled = false;
+            });
+        });
         
         // View member details (read-only view)
         function viewMemberDetails(personId) {
@@ -1596,23 +1458,6 @@ foreach ($persons as $person) {
             document.addEventListener('keydown', escHandler);
         }
         
-        // Generate report
-        
-        
-        // Download report
-        function downloadReport(reportText) {
-            const actualReport = reportText.replace(/\\n/g, '\n');
-            const blob = new Blob([actualReport], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `contributions-report-${<?php echo json_encode($current_year); ?>}.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-        
         function showNotification(message, type = 'info') {
             // Remove existing notifications
             document.querySelectorAll('.notification').forEach(n => n.remove());
@@ -1644,15 +1489,6 @@ foreach ($persons as $person) {
                     setTimeout(() => n.remove(), 300);
                 });
             }, 5000);
-            
-            // Add keyboard shortcuts
-            document.addEventListener('keydown', function(e) {
-                // Ctrl/Cmd + S to save
-                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-                    e.preventDefault();
-                    document.getElementById('contributionsForm').submit();
-                }
-            });
             
             // Close modal when clicking outside
             document.getElementById('memberModal').addEventListener('click', function(e) {
