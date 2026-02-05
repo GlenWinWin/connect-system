@@ -311,3 +311,99 @@
 .age-group-card:nth-child(5) .age-group-count {
     color: #3A86FF;
 }
+
+/* Storage Controls - Add to dashboard.css or main.css */
+.storage-controls {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.storage-info {
+    background: rgba(255, 107, 53, 0.08);
+    border: 1px solid rgba(255, 107, 53, 0.2);
+    border-radius: var(--border-radius-sm);
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-grow: 1;
+    min-width: 200px;
+}
+
+.storage-info i {
+    color: var(--primary);
+    font-size: 16px;
+}
+
+/* Notification styles */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--success);
+    color: white;
+    padding: 15px 25px;
+    border-radius: var(--border-radius-sm);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: var(--shadow-lg);
+    z-index: 9999;
+    animation: slideIn 0.3s ease-out;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.notification-info {
+    background: var(--info);
+}
+
+.notification-warning {
+    background: var(--warning);
+}
+
+.notification-error {
+    background: var(--error);
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .storage-controls {
+        flex-direction: column;
+    }
+
+    .storage-info {
+        font-size: 12px;
+        min-width: unset;
+    }
+}

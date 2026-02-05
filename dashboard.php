@@ -80,7 +80,7 @@ $age_groups = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
 
         <!-- Date Filter -->
         <div class="filter-section fade-in">
-            <form method="GET" class="date-filter-form">
+            <form method="GET" class="date-filter-form" id="filterForm">
                 <div class="form-group">
                     <label for="start_date"><i class="far fa-calendar-alt"></i> Start Date</label>
                     <input type="date" id="start_date" name="start_date" value="<?php echo htmlspecialchars($start_date); ?>" required>
@@ -101,7 +101,7 @@ $age_groups = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
                     </select>
                 </div>
                 <div class="form-group">
-                    <button type="submit" class="btn btn-success">
+                    <button type="submit" class="btn btn-success" id="applyFilterBtn">
                         <i class="fas fa-filter"></i> Apply Filter
                     </button>
                 </div>
@@ -111,6 +111,20 @@ $age_groups = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
                     </a>
                 </div>
             </form>
+            
+            <!-- Storage Controls (NEW) -->
+            <div class="storage-controls" id="storageControls">
+                <div class="storage-info" id="storageStatus">
+                    <i class="fas fa-database"></i>
+                    <span>No saved settings</span>
+                </div>
+                <button type="button" class="btn btn-info" id="saveSettingsBtn">
+                    <i class="fas fa-save"></i> Save Settings
+                </button>
+                <button type="button" class="btn btn-warning" id="removeSettingsBtn" style="display: none;">
+                    <i class="fas fa-trash-alt"></i> Remove Settings
+                </button>
+            </div>
         </div>
 
         <!-- Age Group Statistics -->
@@ -410,14 +424,264 @@ $age_groups = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
 
     <script>
+        // Local Storage Keys for Dashboard
+        const STORAGE_KEYS = {
+            START_DATE: 'dashboard_start',
+            END_DATE: 'dashboard_end',
+            AGE_GROUP: 'dashboard_group'
+        };
+
+        // DOM Elements
+        const filterForm = document.getElementById('filterForm');
+        const startDateInput = document.getElementById('start_date');
+        const endDateInput = document.getElementById('end_date');
+        const ageGroupSelect = document.getElementById('age_group');
+        const applyFilterBtn = document.getElementById('applyFilterBtn');
+        const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+        const removeSettingsBtn = document.getElementById('removeSettingsBtn');
+        const storageStatus = document.getElementById('storageStatus');
+
+        // Check for saved settings on page load - but only if no URL parameters exist
+        function checkSavedSettings() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const hasUrlParams = urlParams.has('start_date') || urlParams.has('end_date') || urlParams.has('age_group');
+            
+            console.log('Dashboard - URL parameters present:', hasUrlParams, 'Params:', Object.fromEntries(urlParams));
+            
+            // Only apply saved settings if NO URL parameters exist
+            if (!hasUrlParams) {
+                const savedStart = localStorage.getItem(STORAGE_KEYS.START_DATE);
+                const savedEnd = localStorage.getItem(STORAGE_KEYS.END_DATE);
+                const savedGroup = localStorage.getItem(STORAGE_KEYS.AGE_GROUP);
+                
+                console.log('Dashboard - Saved settings:', { savedStart, savedEnd, savedGroup });
+                
+                if (savedStart && savedEnd) {
+                    // Apply saved settings to form
+                    startDateInput.value = savedStart;
+                    endDateInput.value = savedEnd;
+                    
+                    if (savedGroup) {
+                        ageGroupSelect.value = savedGroup;
+                    }
+                    
+                    // Show saved status
+                    updateStorageStatus(true);
+                    
+                    // Auto-submit form ONLY if we have saved settings and no URL params
+                    console.log('Dashboard - Auto-submitting with saved settings...');
+                    setTimeout(() => {
+                        filterForm.submit();
+                    }, 100);
+                } else {
+                    updateStorageStatus(false);
+                }
+            } else {
+                // URL parameters exist - update storage status based on current values
+                updateStorageStatusFromCurrent();
+            }
+        }
+
+        // Update storage status from current form values
+        function updateStorageStatusFromCurrent() {
+            const currentStart = startDateInput.value;
+            const currentEnd = endDateInput.value;
+            const currentGroup = ageGroupSelect.value;
+            
+            // Check if current values match saved values
+            const savedStart = localStorage.getItem(STORAGE_KEYS.START_DATE);
+            const savedEnd = localStorage.getItem(STORAGE_KEYS.END_DATE);
+            const savedGroup = localStorage.getItem(STORAGE_KEYS.AGE_GROUP);
+            
+            const hasSavedSettings = savedStart && savedEnd;
+            const currentMatchesSaved = hasSavedSettings && 
+                                       savedStart === currentStart && 
+                                       savedEnd === currentEnd &&
+                                       savedGroup === currentGroup;
+            
+            if (currentMatchesSaved) {
+                updateStorageStatus(true);
+            } else {
+                // Check if we have any saved settings at all
+                updateStorageStatus(hasSavedSettings);
+            }
+        }
+
+        // Update storage status display
+        function updateStorageStatus(hasSettings) {
+            if (hasSettings) {
+                const savedStart = localStorage.getItem(STORAGE_KEYS.START_DATE);
+                const savedEnd = localStorage.getItem(STORAGE_KEYS.END_DATE);
+                const savedGroup = localStorage.getItem(STORAGE_KEYS.AGE_GROUP);
+                
+                let statusText = `Saved: ${formatDate(savedStart)} to ${formatDate(savedEnd)}`;
+                if (savedGroup) {
+                    statusText += ` | Group: ${savedGroup}`;
+                }
+                
+                storageStatus.innerHTML = `<i class="fas fa-database"></i><span>${statusText}</span>`;
+                removeSettingsBtn.style.display = 'inline-flex';
+            } else {
+                storageStatus.innerHTML = `<i class="fas fa-database"></i><span>No saved settings</span>`;
+                removeSettingsBtn.style.display = 'none';
+            }
+        }
+
+        // Format date for display
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric',
+                year: 'numeric'
+            });
+        }
+
+        // Save settings to localStorage
+        function saveSettings() {
+            const startDate = startDateInput.value;
+            const endDate = endDateInput.value;
+            const ageGroup = ageGroupSelect.value;
+            
+            if (!startDate || !endDate) {
+                alert('Please select both start and end dates before saving.');
+                return;
+            }
+            
+            localStorage.setItem(STORAGE_KEYS.START_DATE, startDate);
+            localStorage.setItem(STORAGE_KEYS.END_DATE, endDate);
+            
+            if (ageGroup) {
+                localStorage.setItem(STORAGE_KEYS.AGE_GROUP, ageGroup);
+            } else {
+                localStorage.removeItem(STORAGE_KEYS.AGE_GROUP);
+            }
+            
+            updateStorageStatus(true);
+            showNotification('Settings saved successfully!', 'success');
+        }
+
+        // Remove settings from localStorage
+        function removeSettings() {
+            if (confirm('Are you sure you want to remove your saved settings?')) {
+                localStorage.removeItem(STORAGE_KEYS.START_DATE);
+                localStorage.removeItem(STORAGE_KEYS.END_DATE);
+                localStorage.removeItem(STORAGE_KEYS.AGE_GROUP);
+                
+                updateStorageStatus(false);
+                showNotification('Settings removed successfully!', 'info');
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            // Remove existing notification
+            const existingNotification = document.querySelector('.notification');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+            
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+                <span>${message}</span>
+            `;
+            
+            // Add styles
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? 'var(--success)' : 'var(--info)'};
+                color: white;
+                padding: 15px 25px;
+                border-radius: var(--border-radius-sm);
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                box-shadow: var(--shadow-lg);
+                z-index: 9999;
+                animation: slideIn 0.3s ease-out;
+                font-family: 'Inter', sans-serif;
+                font-weight: 500;
+                font-size: 14px;
+            `;
+            
+            // Add animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from {
+                        transform: translateX(100%);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            document.body.appendChild(notification);
+            
+            // Auto-remove after 3 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-out forwards';
+                
+                const slideOutStyle = document.createElement('style');
+                slideOutStyle.textContent = `
+                    @keyframes slideOut {
+                        from {
+                            transform: translateX(0);
+                            opacity: 1;
+                        }
+                        to {
+                            transform: translateX(100%);
+                            opacity: 0;
+                        }
+                    }
+                `;
+                document.head.appendChild(slideOutStyle);
+                
+                setTimeout(() => {
+                    notification.remove();
+                    document.head.removeChild(slideOutStyle);
+                }, 300);
+            }, 3000);
+        }
+
         function filterAgeGroup(ageGroup) {
             const url = new URL(window.location.href);
             url.searchParams.set('age_group', ageGroup);
             window.location.href = url.toString();
         }
         
-        // Modal functionality
+        // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('Dashboard DOM fully loaded and parsed');
+            
+            // Check for saved settings (but respect URL parameters first)
+            checkSavedSettings();
+            
+            // Event Listeners for storage controls
+            saveSettingsBtn.addEventListener('click', saveSettings);
+            removeSettingsBtn.addEventListener('click', removeSettings);
+            
+            // Also update storage status when form values change
+            startDateInput.addEventListener('change', updateStorageStatusFromCurrent);
+            endDateInput.addEventListener('change', updateStorageStatusFromCurrent);
+            ageGroupSelect.addEventListener('change', updateStorageStatusFromCurrent);
+            
+            // Save settings when Apply Filter is clicked
+            applyFilterBtn.addEventListener('click', function(e) {
+                console.log('Apply Filter clicked');
+                // Form will submit normally
+            });
+            
+            // Modal functionality
             const modal = document.getElementById('csvUploadModal');
             const openModalBtn = document.querySelector('[data-open-modal]');
             const closeModalBtns = document.querySelectorAll('.close, .close-modal');
