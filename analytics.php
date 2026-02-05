@@ -65,6 +65,43 @@ $age_group_sql = "SELECT age_group, COUNT(*) as count FROM first_timers $where_c
 $age_group_stmt = $pdo->prepare($age_group_sql);
 $age_group_stmt->execute($params);
 $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Get connected data breakdown
+$connected_sql = "SELECT 
+                    iam,
+                    COUNT(*) as connected_count
+                  FROM first_timers 
+                  WHERE started_one2one = 1 
+                  AND DATE(created_at) BETWEEN ? AND ?
+                  " . (!empty($age_group_filter) ? " AND age_group = ?" : "") . "
+                  GROUP BY iam";
+$connected_params = [$start_date, $end_date];
+if (!empty($age_group_filter)) {
+    $connected_params[] = $age_group_filter;
+}
+$connected_stmt = $pdo->prepare($connected_sql);
+$connected_stmt->execute($connected_params);
+$connected_data = $connected_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Calculate connected breakdown
+$connected_from_first_timers = 0;
+$connected_from_visitors = 0;
+
+foreach ($connected_data as $conn) {
+    if ($conn['iam'] === 'LOOKING FOR A CHURCH') {
+        $connected_from_first_timers = $conn['connected_count'];
+    } else {
+        $connected_from_visitors = $conn['connected_count'];
+    }
+}
+
+// Calculate adjusted totals for chart
+$first_timers_not_connected = $total_first_timers - $connected_from_first_timers;
+$visitors_not_connected = $total_visitors - $connected_from_visitors;
+$total_connected = $connected_from_first_timers + $connected_from_visitors;
+
+// Verify totals match
+$chart_total = $first_timers_not_connected + $visitors_not_connected + $total_connected;
 ?>
 
 <!DOCTYPE html>
@@ -86,7 +123,7 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
             --accent: #FF5A5F;
             --success: #2EC4B6;
             --warning: #FFBF69;
-            --danger: #E71D36;
+            --info: #3A86FF;
             --light: #FFF8F0;
             --dark: #2A2D34;
             --gray: #8C8C8C;
@@ -224,7 +261,12 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
         }
 
         .btn-secondary {
-            background: rgba(255, 255, 255, 0.15);
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--secondary) 100%);
+            box-shadow: 0 4px 15px rgba(255, 142, 83, 0.2);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 8px 25px rgba(255, 142, 83, 0.3);
         }
 
         /* Filter Section */
@@ -526,34 +568,43 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
             font-weight: 600;
         }
 
-        /* Bar Chart Number Styles */
-        .bar-value-label {
+        /* Age Group Bar Value Styles */
+        .bar-value-container {
             position: absolute;
-            top: -25px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--dark);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: none;
             z-index: 10;
-            white-space: nowrap;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
-        .bar-value-label::after {
-            content: '';
-            position: absolute;
-            bottom: -4px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 4px solid transparent;
-            border-right: 4px solid transparent;
-            border-top: 4px solid var(--dark);
+        .bar-value-number {
+            font-family: 'Poppins', sans-serif;
+            font-size: 16px;
+            font-weight: 800;
+            padding: 6px 10px;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+            white-space: nowrap;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            background: rgba(42, 45, 52, 0.9);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .bar-value-percentage {
+            font-size: 12px;
+            font-weight: 700;
+            color: white;
+            background: rgba(255, 107, 53, 0.9);
+            padding: 4px 8px;
+            border-radius: 6px;
+            box-shadow: 0 3px 10px rgba(255, 107, 53, 0.3);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         }
 
         /* Empty State */
@@ -625,6 +676,17 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
 
             .filter-form {
                 grid-template-columns: 1fr;
+            }
+
+            .bar-value-number {
+                font-size: 14px;
+                padding: 4px 8px;
+                min-width: 45px;
+            }
+
+            .bar-value-percentage {
+                font-size: 10px;
+                padding: 3px 6px;
             }
         }
 
@@ -808,17 +870,17 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
                 <div class="stat-card followup">
                     <div class="stat-number"><?php echo $total_one2one; ?></div>
                     <div class="stat-label">
-                        <i class="fas fa-handshake"></i> One-to-One Started
+                        <i class="fas fa-handshake"></i> Connected (One-to-One)
                     </div>
                     <div class="stat-percentage">
-                        <?php echo $total_first_timers > 0 ? round(($total_one2one / $total_first_timers) * 100, 1) : 0; ?>% of first timers
+                        <?php echo $total_visitors_all > 0 ? round(($total_one2one / $total_visitors_all) * 100, 1) : 0; ?>% of total
                     </div>
                 </div>
             </div>
 
             <!-- Charts Grid -->
             <div class="charts-grid">
-                <!-- Visitor Type Chart -->
+                <!-- Visitor Type Chart (Now with Connected as a subset) -->
                 <div class="chart-container">
                     <h3 class="chart-title">
                         <i class="fas fa-chart-pie"></i> Visitor Distribution
@@ -892,9 +954,11 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
         const ageGroupData = <?php echo json_encode(array_column($age_group_data, 'count')); ?>;
         const ageGroupLabels = <?php echo json_encode(array_column($age_group_data, 'age_group')); ?>;
 
-        // Visitor Type totals
-        const totalFirstTimers = <?php echo $total_first_timers; ?>;
-        const totalVisitors = <?php echo $total_visitors; ?>;
+        // Visitor Type data - dynamic from PHP calculations
+        const firstTimersNotConnected = <?php echo $first_timers_not_connected; ?>;
+        const visitorsNotConnected = <?php echo $visitors_not_connected; ?>;
+        const totalConnected = <?php echo $total_connected; ?>;
+        const totalVisitorsAll = <?php echo $total_visitors_all; ?>;
 
         // Format dates for display
         const formattedDates = dates.map(date => {
@@ -915,6 +979,7 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
             accent: '#FF5A5F',
             success: '#2EC4B6',
             warning: '#FFBF69',
+            info: '#3A86FF',
             gradient1: ['#FF6B35', '#FF9F1C'],
             gradient2: ['#FF8E53', '#FFBF69'],
             gradient3: ['#2EC4B6', '#25a898'],
@@ -930,17 +995,17 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
             'Seasoned': '#3A86FF'
         };
 
-        // Visitor Type Chart (Doughnut with numbers)
+        // Visitor Type Chart (Doughnut with numbers) - UPDATED with dynamic connected data
         const visitorTypeCtx = document.getElementById('visitorTypeChart').getContext('2d');
         new Chart(visitorTypeCtx, {
             type: 'doughnut',
             data: {
-                labels: ['First Timers', 'Visitors'],
+                labels: ['First Timers', 'Visitors', 'Connected'],
                 datasets: [{
-                    data: [totalFirstTimers, totalVisitors],
-                    backgroundColor: [colors.primary, colors.secondary],
+                    data: [firstTimersNotConnected, visitorsNotConnected, totalConnected],
+                    backgroundColor: [colors.primary, colors.secondary, colors.success],
                     borderWidth: 0,
-                    hoverBackgroundColor: [colors.primaryLight, '#FFB347'],
+                    hoverBackgroundColor: [colors.primaryLight, '#FFB347', '#4DD0C6'],
                     hoverBorderWidth: 0
                 }]
             },
@@ -972,9 +1037,16 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
                         boxPadding: 8,
                         callbacks: {
                             label: function(context) {
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const total = totalVisitorsAll;
                                 const percentage = total > 0 ? Math.round((context.raw / total) * 100) : 0;
-                                return `${context.label}: ${context.raw} (${percentage}%)`;
+                                let description = context.label;
+                                
+                                // Add description for connected if it's 0
+                                if (context.label === 'Connected' && context.raw === 0) {
+                                    description = 'Connected (No one-to-one started yet)';
+                                }
+                                
+                                return `${description}: ${context.raw} (${percentage}%)`;
                             }
                         }
                     },
@@ -986,12 +1058,22 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
                             size: window.innerWidth < 768 ? 12 : 14
                         },
                         formatter: function(value, context) {
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const total = totalVisitorsAll;
                             const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                            
+                            // Don't show 0 values for Connected
+                            if (context.dataIndex === 2 && value === 0) {
+                                return '0%\n(Not started)';
+                            }
+                            
                             return value > 0 ? `${value}\n(${percentage}%)` : '';
                         },
                         display: function(context) {
                             const value = context.dataset.data[context.dataIndex];
+                            // Always show Connected even if 0
+                            if (context.dataIndex === 2) {
+                                return true;
+                            }
                             return value > 0;
                         }
                     }
@@ -1000,7 +1082,7 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
             plugins: [ChartDataLabels]
         });
 
-        // Daily Trend Chart (Line with numbers on points)
+        // Daily Trend Chart (Line chart WITHOUT numbers on points)
         const dailyTrendCtx = document.getElementById('dailyTrendChart').getContext('2d');
         new Chart(dailyTrendCtx, {
             type: 'line',
@@ -1016,7 +1098,7 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
                         fill: true,
                         pointBackgroundColor: colors.primary,
                         pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
+                        pointBorderWidth: 3,
                         pointRadius: 5,
                         pointHoverRadius: 8,
                         borderWidth: 3,
@@ -1031,7 +1113,7 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
                         fill: true,
                         pointBackgroundColor: colors.secondary,
                         pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
+                        pointBorderWidth: 3,
                         pointRadius: 5,
                         pointHoverRadius: 8,
                         borderWidth: 3,
@@ -1179,9 +1261,9 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
             plugins: [ChartDataLabels]
         });
 
-        // Age Group Distribution Chart (Bar with numbers ALWAYS VISIBLE)
+        // Age Group Distribution Chart (Bar with WHITE numbers)
         const ageGroupCtx = document.getElementById('ageGroupChart').getContext('2d');
-        new Chart(ageGroupCtx, {
+        const ageGroupChart = new Chart(ageGroupCtx, {
             type: 'bar',
             data: {
                 labels: ageGroupLabels,
@@ -1255,37 +1337,56 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
                                 return `${context.label}: ${context.raw} (${percentage}%)`;
                             }
                         }
-                    },
-                    datalabels: {
-                        color: function(context) {
-                            // Make sure text is visible on all bar colors
-                            const barColor = context.dataset.backgroundColor[context.dataIndex];
-                            // Check if bar is light or dark
-                            const color = barColor.replace('rgb(', '').replace(')', '').split(',');
-                            const r = parseInt(color[0]);
-                            const g = parseInt(color[1]);
-                            const b = parseInt(color[2]);
-                            // Calculate luminance
-                            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-                            return luminance > 0.5 ? '#2A2D34' : 'white'; // Dark text on light bars, white text on dark bars
-                        },
-                        font: {
-                            family: 'Inter',
-                            weight: '700',
-                            size: window.innerWidth < 768 ? 14 : 16
-                        },
-                        formatter: function(value) {
-                            return value;
-                        },
-                        anchor: 'end',
-                        align: 'top',
-                        offset: 8,
-                        display: 'auto' // Always show the labels
+                    }
+                },
+                animation: {
+                    onComplete: function() {
+                        addBarValueLabels(ageGroupChart);
+                    }
+                },
+                resize: {
+                    onResize: function() {
+                        setTimeout(() => addBarValueLabels(ageGroupChart), 100);
                     }
                 }
-            },
-            plugins: [ChartDataLabels]
+            }
         });
+
+        // Function to add WHITE value labels to bars
+        function addBarValueLabels(chart) {
+            const canvas = chart.canvas;
+            const meta = chart.getDatasetMeta(0);
+            
+            // Clear previous labels
+            const existingLabels = canvas.parentNode.querySelectorAll('.bar-value-container');
+            existingLabels.forEach(label => label.remove());
+            
+            // Calculate total for percentages
+            const total = ageGroupData.reduce((a, b) => a + b, 0);
+            
+            // Add labels for each bar
+            meta.data.forEach((bar, index) => {
+                const value = ageGroupData[index];
+                const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                
+                // Position at top of bar
+                const x = bar.x;
+                const y = bar.y - 20; // Position above the bar
+                
+                const labelContainer = document.createElement('div');
+                labelContainer.className = 'bar-value-container';
+                labelContainer.style.left = `${x}px`;
+                labelContainer.style.top = `${y}px`;
+                labelContainer.style.transform = 'translate(-50%, -100%)';
+                
+                labelContainer.innerHTML = `
+                    <div class="bar-value-number">${value}</div>
+                    <div class="bar-value-percentage">${percentage}%</div>
+                `;
+                
+                canvas.parentNode.appendChild(labelContainer);
+            });
+        }
 
         // Add animation to stat cards on hover
         document.addEventListener('DOMContentLoaded', function() {
@@ -1306,7 +1407,10 @@ $age_group_data = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
 
         // Handle window resize
         window.addEventListener('resize', function() {
-            // Charts will automatically resize
+            // Update bar value labels on resize
+            if (ageGroupChart) {
+                setTimeout(() => addBarValueLabels(ageGroupChart), 100);
+            }
         });
     </script>
 </body>
