@@ -619,7 +619,7 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
             filter: brightness(1.05);
         }
 
-        /* Age Group Bar Value Styles - WHITE TEXT */
+        /* Age Group Bar Value Styles - ONLY PERCENTAGE (WHITE TEXT) */
         .bar-value-container {
             position: absolute;
             display: flex;
@@ -629,31 +629,17 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
             z-index: 10;
         }
 
-        .bar-value-number {
-            font-family: 'Poppins', sans-serif;
-            font-size: 16px;
-            font-weight: 800;
-            padding: 4px 8px;
-            border-radius: 6px;
-            margin-bottom: 2px;
-            white-space: nowrap;
-            color: white !important; /* Force white color */
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8); /* Stronger shadow for better visibility */
-            background: rgba(0, 0, 0, 0.7); /* Dark background for contrast */
-            backdrop-filter: blur(4px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            min-width: 40px;
-            text-align: center;
-        }
-
         .bar-value-percentage {
-            font-size: 12px;
+            font-size: 16px;
             font-weight: 700;
-            color: white !important; /* Force white color */
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); /* Stronger shadow */
+            color: white !important;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
             background: rgba(255, 107, 53, 0.9);
-            padding: 2px 6px;
-            border-radius: 4px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            white-space: nowrap;
+            min-width: 50px;
+            text-align: center;
         }
 
         /* Empty State */
@@ -732,15 +718,10 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                 grid-template-columns: 1fr;
             }
 
-            .bar-value-number {
-                font-size: 14px;
-                padding: 3px 6px;
-                min-width: 35px;
-            }
-
             .bar-value-percentage {
-                font-size: 10px;
-                padding: 1px 4px;
+                font-size: 14px;
+                padding: 4px 8px;
+                min-width: 40px;
             }
 
             .doughnut-center-text {
@@ -787,6 +768,12 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
             
             .center-total {
                 font-size: 18px;
+            }
+            
+            .bar-value-percentage {
+                font-size: 12px;
+                padding: 3px 6px;
+                min-width: 35px;
             }
         }
 
@@ -1023,7 +1010,7 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                     </div>
                 </div>
 
-                <!-- Age Group Distribution Chart (WHITE NUMBERS) -->
+                <!-- Age Group Distribution Chart (ONLY PERCENTAGES) -->
                 <div class="chart-container">
                     <h3 class="chart-title">
                         <i class="fas fa-chart-bar"></i> Age Group Distribution
@@ -1287,7 +1274,11 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                                 return `${context.dataset.label}: ${context.raw}`;
                             }
                         }
+                    },
+                    datalabels: {
+                        display: false // Make sure this is false
                     }
+
                 },
                 interaction: {
                     intersect: false,
@@ -1375,11 +1366,9 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
             plugins: [ChartDataLabels]
         });
 
-        // Age Group Distribution Chart (Bar with WHITE numbers)
-        // FIXED: Simplified approach - remove the complex onComplete handlers
+        // Age Group Distribution Chart (Bar with ONLY PERCENTAGES)
         const ageGroupCtx = document.getElementById('ageGroupChart').getContext('2d');
         
-        // Create a simpler chart without the onComplete handlers for now
         ageGroupChart = new Chart(ageGroupCtx, {
             type: 'bar',
             data: {
@@ -1460,14 +1449,15 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                                 return `${context.label}: ${context.raw} (${percentage}%)`;
                             }
                         }
+                    },
+                    datalabels: {
+                        display: false // Make sure this is false
                     }
-                },
-                // REMOVED the problematic onComplete and onResize handlers
-                // We'll handle the labels differently
+                }
             }
         });
 
-        // FIXED: Simplified function to add value labels
+        // Function to add percentage labels on bars
         function addBarValueLabels() {
             if (!ageGroupChart) {
                 console.warn('ageGroupChart is not available');
@@ -1494,7 +1484,7 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                 // Calculate total for percentages
                 const total = ageGroupData.reduce((a, b) => a + b, 0);
                 
-                // Add labels for each bar
+                // Add percentage labels for each bar
                 meta.data.forEach((bar, index) => {
                     if (!bar) return;
                     
@@ -1503,7 +1493,7 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                     
                     // Position at top of bar
                     const x = bar.x;
-                    const y = bar.y - 15;
+                    const y = bar.y - 20; // Position above the bar
                     
                     const labelContainer = document.createElement('div');
                     labelContainer.className = 'bar-value-container';
@@ -1514,9 +1504,9 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                     labelContainer.style.pointerEvents = 'none';
                     labelContainer.style.zIndex = '10';
                     
+                    // ONLY SHOW PERCENTAGE, NOT THE VALUE
                     labelContainer.innerHTML = `
-                        <div class="bar-value-number">${value}</div>
-                        <div class="bar-value-percentage">${percentage}%</div>
+                        <div class="bar-value-percentage">${value}</div>
                     `;
                     
                     canvas.parentNode.appendChild(labelContainer);
@@ -1608,7 +1598,7 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
             });
         });
 
-        // Handle window resize - FIXED: Check if ageGroupChart exists
+        // Handle window resize - Update bar percentage labels on resize
         window.addEventListener('resize', function() {
             // Update bar value labels on resize
             if (ageGroupChart) {
