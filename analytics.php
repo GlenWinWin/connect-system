@@ -457,6 +457,46 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
             box-shadow: 0 4px 15px rgba(255, 107, 53, 0.2);
         }
 
+        /* Connected View Button */
+        #view-connected-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, var(--success) 0%, #25a898 100%);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 15px rgba(46, 196, 182, 0.2);
+            width: 100%;
+        }
+
+        #view-connected-btn:hover {
+            background: linear-gradient(135deg, var(--success) 0%, #1E9B8A 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(46, 196, 182, 0.3);
+        }
+
+        #view-connected-btn:active {
+            transform: translateY(-1px);
+        }
+
+        #view-connected-btn i {
+            font-size: 16px;
+        }
+
+        /* Adjust stat card for button */
+        .stat-card.followup {
+            padding-bottom: 35px;
+        }
+
         /* Charts Grid */
         .charts-grid {
             display: grid;
@@ -714,6 +754,11 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
             .center-label {
                 font-size: 10px;
             }
+
+            #view-connected-btn {
+                padding: 10px 20px;
+                font-size: 13px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -826,7 +871,7 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                 <div class="logo">
                     <i class="fas fa-chart-network"></i>
                 </div>
-                <h1 class="church-name">Visitor Analytics Dashboard</h1>
+                <h1 class="church-name">Analytics</h1>
             </div>
             <div class="user-info">
                 <a href="dashboard.php" class="btn btn-secondary">
@@ -920,6 +965,10 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                     <div class="stat-percentage">
                         <?php echo $total_visitors_all > 0 ? round(($total_one2one / $total_visitors_all) * 100, 1) : 0; ?>% of total
                     </div>
+                    <!-- View Connected Details Button -->
+                    <button id="view-connected-btn">
+                        <i class="fas fa-eye"></i> View Details
+                    </button>
                 </div>
             </div>
 
@@ -1039,6 +1088,9 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
             'River Women': '#FF5A5F',
             'Seasoned': '#3A86FF'
         };
+
+        // FIXED: Declare ageGroupChart variable at the top level
+        let ageGroupChart = null;
 
         // Visitor Type Chart (Doughnut with numbers)
         const visitorTypeCtx = document.getElementById('visitorTypeChart').getContext('2d');
@@ -1323,8 +1375,11 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
         });
 
         // Age Group Distribution Chart (Bar with WHITE numbers)
+        // FIXED: Simplified approach - remove the complex onComplete handlers
         const ageGroupCtx = document.getElementById('ageGroupChart').getContext('2d');
-        const ageGroupChart = new Chart(ageGroupCtx, {
+        
+        // Create a simpler chart without the onComplete handlers for now
+        ageGroupChart = new Chart(ageGroupCtx, {
             type: 'bar',
             data: {
                 labels: ageGroupLabels,
@@ -1406,77 +1461,157 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                         }
                     }
                 },
-                animation: {
-                    onComplete: function() {
-                        addBarValueLabels(ageGroupChart);
-                    }
-                },
-                resize: {
-                    onResize: function() {
-                        setTimeout(() => addBarValueLabels(ageGroupChart), 100);
-                    }
-                }
+                // REMOVED the problematic onComplete and onResize handlers
+                // We'll handle the labels differently
             }
         });
 
-        // Function to add WHITE value labels to bars
-        function addBarValueLabels(chart) {
-            const canvas = chart.canvas;
-            const meta = chart.getDatasetMeta(0);
+        // FIXED: Simplified function to add value labels
+        function addBarValueLabels() {
+            if (!ageGroupChart) {
+                console.warn('ageGroupChart is not available');
+                return;
+            }
             
-            // Clear previous labels
-            const existingLabels = canvas.parentNode.querySelectorAll('.bar-value-container');
-            existingLabels.forEach(label => label.remove());
-            
-            // Calculate total for percentages
-            const total = ageGroupData.reduce((a, b) => a + b, 0);
-            
-            // Add labels for each bar
-            meta.data.forEach((bar, index) => {
-                const value = ageGroupData[index];
-                const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+            try {
+                const canvas = ageGroupChart.canvas;
+                if (!canvas) {
+                    console.warn('Canvas not found');
+                    return;
+                }
                 
-                // Position at top of bar
-                const x = bar.x;
-                const y = bar.y - 15;
+                const meta = ageGroupChart.getDatasetMeta(0);
+                if (!meta) {
+                    console.warn('Chart metadata not available');
+                    return;
+                }
                 
-                const labelContainer = document.createElement('div');
-                labelContainer.className = 'bar-value-container';
-                labelContainer.style.left = `${x}px`;
-                labelContainer.style.top = `${y}px`;
-                labelContainer.style.transform = 'translate(-50%, -100%)';
+                // Clear previous labels
+                const existingLabels = canvas.parentNode.querySelectorAll('.bar-value-container');
+                existingLabels.forEach(label => label.remove());
                 
-                labelContainer.innerHTML = `
-                    <div class="bar-value-number">${value}</div>
-                    <div class="bar-value-percentage">${percentage}%</div>
-                `;
+                // Calculate total for percentages
+                const total = ageGroupData.reduce((a, b) => a + b, 0);
                 
-                canvas.parentNode.appendChild(labelContainer);
-            });
+                // Add labels for each bar
+                meta.data.forEach((bar, index) => {
+                    if (!bar) return;
+                    
+                    const value = ageGroupData[index];
+                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                    
+                    // Position at top of bar
+                    const x = bar.x;
+                    const y = bar.y - 15;
+                    
+                    const labelContainer = document.createElement('div');
+                    labelContainer.className = 'bar-value-container';
+                    labelContainer.style.left = `${x}px`;
+                    labelContainer.style.top = `${y}px`;
+                    labelContainer.style.transform = 'translate(-50%, -100%)';
+                    labelContainer.style.position = 'absolute';
+                    labelContainer.style.pointerEvents = 'none';
+                    labelContainer.style.zIndex = '10';
+                    
+                    labelContainer.innerHTML = `
+                        <div class="bar-value-number">${value}</div>
+                        <div class="bar-value-percentage">${percentage}%</div>
+                    `;
+                    
+                    canvas.parentNode.appendChild(labelContainer);
+                });
+            } catch (error) {
+                console.error('Error adding bar value labels:', error);
+            }
         }
 
-        // Add animation to stat cards on hover
+        // Call addBarValueLabels after a short delay to ensure chart is rendered
+        setTimeout(() => {
+            addBarValueLabels();
+        }, 500);
+
+        // NEW CODE: Button to view Connected details
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM fully loaded and parsed');
+            
+            // Add click handler to View Details button
+            const viewConnectedBtn = document.querySelector('#view-connected-btn');
+            
+            if (viewConnectedBtn) {
+                console.log('View Connected button found:', viewConnectedBtn);
+                
+                viewConnectedBtn.addEventListener('click', function(e) {
+                    console.log('View Connected button clicked!');
+                    e.preventDefault(); // Prevent any default behavior
+                    e.stopPropagation(); // Prevent event bubbling
+                    
+                    // Get current month from filter or use default
+                    const startDateInput = document.getElementById('start_date');
+                    let startMonth;
+                    
+                    if (startDateInput && startDateInput.value) {
+                        const startDate = new Date(startDateInput.value);
+                        startMonth = startDate.getMonth() + 1; // January is 1
+                        console.log('Using month from filter:', startMonth);
+                    } else {
+                        // Default to current month
+                        startMonth = new Date().getMonth() + 1;
+                        console.log('Using current month:', startMonth);
+                    }
+                    
+                    // Redirect to connected page
+                    console.log('Redirecting to connected.php?start=' + startMonth);
+                    window.location.href = `connected.php?start=${startMonth}`;
+                });
+                
+                // Add button animation
+                viewConnectedBtn.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-3px) scale(1.05)';
+                    this.style.boxShadow = '0 8px 25px rgba(46, 196, 182, 0.4)';
+                });
+                
+                viewConnectedBtn.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                    this.style.boxShadow = '0 4px 15px rgba(46, 196, 182, 0.2)';
+                });
+            } else {
+                console.error('View Connected button not found!');
+                console.log('Searching for any button in stat cards...');
+                document.querySelectorAll('.stat-card').forEach((card, index) => {
+                    console.log(`Card ${index}:`, card.innerHTML);
+                });
+            }
+            
+            // Keep the existing hover effects for other stat cards
             const statCards = document.querySelectorAll('.stat-card');
             statCards.forEach(card => {
+                // Skip if it's the connected card
+                if (card.querySelector('#view-connected-btn')) {
+                    return;
+                }
+                
                 card.addEventListener('mouseenter', function() {
                     const number = this.querySelector('.stat-number');
-                    number.style.transform = 'scale(1.05)';
-                    number.style.transition = 'transform 0.3s ease';
+                    if (number) {
+                        number.style.transform = 'scale(1.05)';
+                        number.style.transition = 'transform 0.3s ease';
+                    }
                 });
                 
                 card.addEventListener('mouseleave', function() {
                     const number = this.querySelector('.stat-number');
-                    number.style.transform = 'scale(1)';
+                    if (number) {
+                        number.style.transform = 'scale(1)';
+                    }
                 });
             });
         });
 
-        // Handle window resize
+        // Handle window resize - FIXED: Check if ageGroupChart exists
         window.addEventListener('resize', function() {
             // Update bar value labels on resize
             if (ageGroupChart) {
-                setTimeout(() => addBarValueLabels(ageGroupChart), 100);
+                setTimeout(() => addBarValueLabels(), 300);
             }
         });
 

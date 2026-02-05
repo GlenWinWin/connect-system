@@ -362,11 +362,11 @@ function isChecked($value) {
                         <div class="radio-group">
                             <?php
                             $age_groups = [
-                                'Youth' => 'Youth (19 years old and below)',
-                                'Young Adult' => 'Young Adult (20 to 35 years old)',
-                                'River Men' => 'River Men (36 to 50 years old)',
-                                'River Women' => 'River Women (36 to 50 years old)',
-                                'Seasoned' => 'Seasoned (51 years old and above)'
+                                'Youth' => 'Youth',
+                                'Young Adult' => 'Young Adult',
+                                'River Men' => 'River Men',
+                                'River Women' => 'River Women',
+                                'Seasoned' => 'Seasoned'
                             ];
                             foreach ($age_groups as $key => $label): 
                                 $currentAgeGroup = $visitor['age_group'];
