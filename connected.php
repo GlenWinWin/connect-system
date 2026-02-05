@@ -638,7 +638,7 @@ $connectedDataJson = json_encode($connectedData);
                         <div class="vip-name">
                             <?php echo htmlspecialchars($row['vips']); ?>
                         </div>
-                        <div class="discipler-name">
+                        <div class="vip-name">
                             <?php echo htmlspecialchars($row['discipler']); ?>
                         </div>
                     </div>
@@ -844,11 +844,11 @@ $connectedDataJson = json_encode($connectedData);
                             doc.setDrawColor(200, 200, 200);
                         }
                         
-                        // Alternate row background
-                        if (index % 2 === 0) {
-                            doc.setFillColor(248, 248, 248);
-                            doc.rect(margin + 1, currentY - 6, contentWidth - 2, 7, 'F');
-                        }
+                        // // Alternate row background
+                        // if (index % 2 === 0) {
+                        //     doc.setFillColor(248, 248, 248);
+                        //     doc.rect(margin + 1, currentY - 6, contentWidth - 2, 7, 'F');
+                        // }
                         
                         // VIP name (truncate if too long)
                         const vipName = row.vips.length > 40 ? row.vips.substring(0, 37) + '...' : row.vips;
@@ -861,7 +861,7 @@ $connectedDataJson = json_encode($connectedData);
                         const disciplerName = row.discipler.length > 25 ? row.discipler.substring(0, 22) + '...' : row.discipler;
                         doc.setFont('helvetica', 'normal');
                         doc.setFontSize(9);
-                        doc.setTextColor(46, 196, 182); // Success color
+                        doc.setTextColor(50, 50, 50); // Success color
                         doc.text(disciplerName, margin + 115, currentY);
                         
                         currentY += 8;
