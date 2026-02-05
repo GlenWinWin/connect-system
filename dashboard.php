@@ -121,9 +121,32 @@ $age_groups = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
             
             <div class="age-group-grid">
-                <?php foreach ($age_groups as $age_group): ?>
+                <?php 
+                // Define the correct order
+                $age_group_order = ['Youth', 'Young Adult', 'River Men', 'River Women', 'Seasoned'];
+                
+                // Reorder age groups according to specified order
+                $ordered_age_groups = [];
+                foreach ($age_group_order as $group_name) {
+                    $found = false;
+                    foreach ($age_groups as $age_group) {
+                        if ($age_group['age_group'] === $group_name) {
+                            $ordered_age_groups[] = $age_group;
+                            $found = true;
+                            break;
+                        }
+                    }
+                    // If age group not found in data, add empty placeholder
+                    if (!$found) {
+                        $ordered_age_groups[] = ['age_group' => $group_name, 'count' => 0];
+                    }
+                }
+                
+                // Display in correct order
+                foreach ($ordered_age_groups as $age_group): 
+                ?>
                     <div class="age-group-card <?php echo $age_group_filter === $age_group['age_group'] ? 'active' : ''; ?>" 
-                         onclick="filterAgeGroup('<?php echo $age_group['age_group']; ?>')">
+                        onclick="filterAgeGroup('<?php echo $age_group['age_group']; ?>')">
                         <div class="age-group-name"><?php echo htmlspecialchars($age_group['age_group']); ?></div>
                         <div class="age-group-count"><?php echo $age_group['count']; ?></div>
                         <div class="detail-label">
@@ -214,13 +237,31 @@ $age_groups = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
                 <p>No visitors have been added yet. <a href="connect-form.php" target="_blank">Add the first visitor</a></p>
             </div>
         <?php else: ?>
-            <!-- Group visitors by age group -->
+            <!-- Group visitors by age group in specified order -->
             <?php 
+            // Define the correct order for age groups
+            $age_group_order = ['Youth', 'Young Adult', 'River Men', 'River Women', 'Seasoned'];
+            
+            // Initialize grouped visitors array in specified order
             $grouped_visitors = [];
-            foreach ($first_timers as $visitor) {
-                $age_group = $visitor['age_group'] ?: 'Not Specified';
-                $grouped_visitors[$age_group][] = $visitor;
+            foreach ($age_group_order as $group_name) {
+                $grouped_visitors[$group_name] = [];
             }
+            
+            // Group visitors by age group (skip visitors without a valid age group)
+            foreach ($first_timers as $visitor) {
+                $age_group = $visitor['age_group'] ?? '';
+                
+                // Only add to group if age group is in our predefined order
+                if (in_array($age_group, $age_group_order)) {
+                    $grouped_visitors[$age_group][] = $visitor;
+                }
+            }
+            
+            // Remove empty groups
+            $grouped_visitors = array_filter($grouped_visitors, function($visitors_in_group) {
+                return !empty($visitors_in_group);
+            });
             ?>
 
             <?php foreach ($grouped_visitors as $age_group_name => $visitors_in_group): ?>
@@ -263,7 +304,7 @@ $age_groups = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
                                     </td>
                                     <td><?php echo htmlspecialchars($visitor['contact']); ?></td>
                                     <td>
-                                        <?php echo htmlspecialchars($visitor['age_group'] ?: 'Not Specified'); ?>
+                                        <?php echo htmlspecialchars($visitor['age_group']); ?>
                                     </td>
                                     <td><?php echo htmlspecialchars($visitor['iam']); ?></td>
                                     <td><?php echo htmlspecialchars($visitor['invited_by'] ?: 'Walk In'); ?></td>
