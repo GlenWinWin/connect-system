@@ -66,7 +66,7 @@ $age_groups = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
         <div class="header">
             <div class="church-info">
                 <div class="logo">
-                    <i class="fas fa-church"></i>
+                    <i class="fas fa-handshake"></i>
                 </div>
                 <h1 class="church-name">Dashboard</h1>
             </div>
