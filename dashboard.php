@@ -242,6 +242,9 @@ $age_groups = $age_group_stmt->fetchAll(PDO::FETCH_ASSOC);
             <button type="button" data-open-modal class="btn btn-secondary">
                 <i class="fas fa-file-upload"></i> Upload CSV
             </button>
+            <a href="funds.php" class="btn btn-info">
+                <i class="fas fa-money-bill-wave"></i> Funds
+            </a>
         </div>
 
         <?php if (empty($first_timers)): ?>
