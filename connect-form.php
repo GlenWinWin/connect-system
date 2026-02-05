@@ -192,9 +192,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
 
                             <div class="form-group">
-                                <label for="messenger" class="required">MESSENGER</label>
+                                <label for="messenger">MESSENGER</label>
                                 <input type="text" id="messenger" name="messenger" placeholder="Enter your messenger ID"
-                                    value="<?php echo htmlspecialchars($_POST['messenger'] ?? ''); ?>" required>
+                                    value="<?php echo htmlspecialchars($_POST['messenger'] ?? ''); ?>">
                             </div>
 
                             <div class="form-group">
@@ -247,9 +247,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
 
                             <div class="form-group">
-                                <label for="connected-with" class="required">CONNECTED WITH</label>
+                                <label for="connected-with">CONNECTED WITH</label>
                                 <input type="text" id="connected-with" name="connected-with" placeholder="How did you connect with us?"
-                                    value="<?php echo htmlspecialchars($_POST['connected-with'] ?? ''); ?>" required>
+                                    value="<?php echo htmlspecialchars($_POST['connected-with'] ?? ''); ?>">
                             </div>
                         </div>
 
