@@ -266,6 +266,7 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
         }
 
         .btn-secondary:hover {
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--secondary) 100%);
             box-shadow: 0 8px 25px rgba(255, 142, 83, 0.3);
         }
 

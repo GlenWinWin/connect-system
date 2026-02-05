@@ -535,23 +535,12 @@ $totalConnected = count($connectedData);
                 <div class="logo">
                     <i class="fas fa-handshake"></i>
                 </div>
-                <h1 class="church-name">River of God Church</h1>
-            </div>
-            
-            <div class="page-title">
-                Connected (One-to-One)
-                <span class="month-year"><?php echo $monthName . ' ' . $year; ?></span>
+                <h1 class="church-name">Connected for the month <?php echo $monthName; ?></h1>
             </div>
             
             <div class="user-info">
                 <a href="analytics.php" class="btn">
                     <i class="fas fa-arrow-left"></i> <span class="desktop-only">Back to Analytics</span>
-                </a>
-                <button onclick="window.print()" class="btn btn-print">
-                    <i class="fas fa-print"></i> <span class="desktop-only">Print</span>
-                </button>
-                <a href="logout.php" class="btn btn-secondary">
-                    <i class="fas fa-sign-out-alt"></i> <span class="desktop-only">Logout</span>
                 </a>
             </div>
         </div>
