@@ -305,7 +305,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="container">
         <div class="header">
             <div class="logo">
-                <i class="fas fa-church"></i>
+                <i class="fas fa-handshake"></i>
             </div>
             <h1 class="church-name">River of God Church</h1>
             <p class="tagline">Staff Login - Newcomer Management System</p>

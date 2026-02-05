@@ -109,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="container">
         <header>
             <div class="logo">
-                <i class="fas fa-church"></i>
+                <i class="fas fa-handshake"></i>
             </div>
             <h1>Welcome to River of God Church!</h1>
             <p class="subtitle">We're glad you're here. Our team would love to serve you and help you get connected.</p>
