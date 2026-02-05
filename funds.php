@@ -228,7 +228,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Fetch persons in exact order as specified
 $person_groups = [
     'Team Leaders' => ['Glenwin', 'Neri', 'Irene', 'Judy', 'Karmela'],
-    'Contributors' => ['Bojie', 'Roland', 'Reyban', 'Niño', 'Catherine', 'Mayla', 'Rashil', 
+    'Members' => ['Bojie', 'Roland', 'Reyban', 'Niño', 'Catherine', 'Mayla', 'Rashil', 
                       'Noemie', 'Melanie', 'Frank', 'Nelvin', 'Ecleo', 'Kim', 'Maricris', 
                       'Riza', 'Mary Anne', 'Franie', 'Belen', 'Cholly', 'Leni', 'Gerza', 'Llosis Nicole']
 ];
