@@ -288,7 +288,6 @@ function isChecked($value) {
                 <h1 class="church-name">Edit Information</h1>
             </div>
             <div class="user-info">
-                <span style="font-weight: 600;">Welcome, <?php echo htmlspecialchars($_SESSION['full_name'] ?? 'User'); ?></span>
                 <a href="dashboard.php" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> <span class="desktop-only">Back to Dashboard</span>
                 </a>

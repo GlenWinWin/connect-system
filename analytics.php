@@ -923,9 +923,6 @@ $chart_total = $first_timers_not_connected + $visitors_not_connected + $total_co
                 <a href="dashboard.php" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> <span class="desktop-only">Dashboard</span>
                 </a>
-                <a href="logout.php" class="btn">
-                    <i class="fas fa-sign-out-alt"></i> <span class="desktop-only">Logout</span>
-                </a>
             </div>
         </div>
 
