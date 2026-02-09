@@ -1050,10 +1050,10 @@ if (isset($_GET['success'])) {
                     </div>
                     <div class="summary-number">₱<?php 
                         // Calculate total contributions up to January 2026 (month index 0)
-                        $january_total = 12468;
-                        echo number_format($january_total, 2);
+                        $total_as_a_whole = 12468;
+                        echo number_format(($january_total + $overall_total), 2);
                     ?></div>
-                    <div class="summary-label">As of end of DEC 2025 Total Funds:</div>
+                    <div class="summary-label">Total as of FEB 2026</div>
                 </div>
                 <div class="summary-card">
                     <div class="summary-icon">
