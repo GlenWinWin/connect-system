@@ -1051,7 +1051,7 @@ if (isset($_GET['success'])) {
                     <div class="summary-number">₱<?php 
 
                         $total_as_a_whole = 12468;
-                        echo number_format(($january_total + $overall_total), 2);
+                        echo number_format(($total_as_a_whole + $overall_total), 2);
                     ?></div>
                     <div class="summary-label">Total as of FEB 2026</div>
                 </div>
