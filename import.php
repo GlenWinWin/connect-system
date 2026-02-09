@@ -145,7 +145,6 @@ function transformIAmValue($iam) {
         'VISITOR' => 'VISITOR',
         'FROM OTHER CHURCH' => 'VISITOR', // Changed to VISITOR
         'LOOKING FOR A CHURCH' => 'LOOKING FOR A CHURCH',
-        'LOOKING FOR A CHURCH' => 'LOOKING FOR A CHURCH'
     ];
     
     return $transformations[$iam] ?? $iam;
