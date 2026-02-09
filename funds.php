@@ -1049,7 +1049,7 @@ if (isset($_GET['success'])) {
                         <i class="fas fa-calendar-check"></i>
                     </div>
                     <div class="summary-number">₱<?php 
-                        // Calculate total contributions up to January 2026 (month index 0)
+
                         $total_as_a_whole = 12468;
                         echo number_format(($january_total + $overall_total), 2);
                     ?></div>
