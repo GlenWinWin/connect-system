@@ -285,6 +285,13 @@ foreach ($persons as $person) {
     $overall_total += $person_total;
 }
 
+$stmt = $pdo->query("SELECT SUM(amount) as total FROM expenses");
+$expenses_result = $stmt->fetch(PDO::FETCH_ASSOC);
+$total_expenses = $expenses_result['total'] ? floatval($expenses_result['total']) : 0;
+
+// Calculate net total (contributions - expenses)
+$net_total = $overall_total - $total_expenses;
+
 // Check for success message from redirect
 if (isset($_GET['success'])) {
     $success = $_GET['success'];
@@ -1044,17 +1051,32 @@ if (isset($_GET['success'])) {
         <main class="main-content">
             <!-- Summary Section -->
             <div class="summary-grid">
-                                <div class="summary-card">
+                <div class="summary-card">
                     <div class="summary-icon">
                         <i class="fas fa-calendar-check"></i>
                     </div>
                     <div class="summary-number">₱<?php 
-
                         $total_as_a_whole = 12468;
-                        echo number_format(($total_as_a_whole + $overall_total), 2);
+                        $total_with_expenses = ($total_as_a_whole + $overall_total) - $total_expenses;
+                        echo number_format($total_with_expenses, 2);
                     ?></div>
-                    <div class="summary-label">Total as of FEB 2026</div>
+                    <div class="summary-label">Total as of <?php echo date('M Y'); ?></div>
                 </div>
+                
+                <!-- Add this new Expenses card -->
+                <div class="summary-card">
+                    <div class="summary-icon">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <div class="summary-number">₱<?php echo number_format($total_expenses, 2); ?></div>
+                    <div class="summary-label">Total Expenses</div>
+                    <div style="margin-top: 12px;">
+                        <a href="expenses.php" class="btn btn-primary" style="width: 100%; padding: 8px 16px; font-size: 13px;">
+                            <i class="fas fa-eye"></i> View Details
+                        </a>
+                    </div>
+                </div>
+                
                 <div class="summary-card">
                     <div class="summary-icon">
                         <i class="fas fa-users"></i>
@@ -1069,7 +1091,7 @@ if (isset($_GET['success'])) {
                     <div class="summary-number"><?php echo count(array_filter($person_totals, fn($total) => $total > 0)); ?></div>
                     <div class="summary-label">Active Contributors</div>
                 </div>
-                                <div class="summary-card">
+                <div class="summary-card">
                     <div class="summary-icon">
                         <i class="fas fa-chart-line"></i>
                     </div>
